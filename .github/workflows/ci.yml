@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
     - name: Checkout code
@@ -28,17 +28,35 @@ jobs:
       id: cache
       with:
         path: bash
-        key: v1-${{ runner.os }}-bash-${{ hashFiles('bash/.git/refs/heads/main') }}
+        key: v3-${{ runner.os }}-bash-${{ hashFiles('bash/.git/refs/heads/main') }}
 
     - name: Install meson
-      run: pip install meson
+      run: pip3 install meson
 
     - name: Install ninja
-      run: sudo apt install -y ninja-build
+      uses: seanmiddleditch/gha-setup-ninja@master
+
+    - name: Various macos set up
+      if: matrix.os == 'macos-latest'
+      run: |
+        # force using clang as a C compiler
+        echo "CC=clang" >> $GITHUB_ENV
+        echo "CFLAGS=-arch x86_64" >> $GITHUB_ENV
+
+        # install packages required for unicode support
+        # (required if --disable-nls isn't set for bash)
+        brew install libiconv
 
     - name: Build bash
       if: steps.cache.outputs.cache-hit != 'true'
       run: ./scripts/build-libbash -j2
+
+    - name: Fix bash library for macos
+      if: matrix.os == 'macos-latest' && steps.cache.outputs.cache-hit != 'true'
+      run: |
+        # combine static archives in a way that macos supports
+        rm bash/libbash.a
+        libtool -static -o bash/libbash.a -arch_only x86_64 $(find bash -name *.a)
 
     - name: Build scallop
       run: |
