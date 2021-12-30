@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [deploy]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Checkout bash
+      uses: actions/checkout@v2
+      with:
+        repository: pkgcraft/bash
+        path: bash
+
+    - name: Set up cache
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: bash
+        key: v1-${{ runner.os }}-bash-${{ hashFiles('bash/.git/refs/heads/main') }}
+
+    - name: Install meson
+      run: pip install meson
+
+    - name: Install ninja
+      run: sudo apt install -y ninja-build
+
+    - name: Build bash
+      run: ./scripts/build-libbash -j2
+
+    - name: Build scallop
+      run: |
+        meson setup build
+        meson compile -C build -v
