@@ -37,6 +37,7 @@ jobs:
       run: sudo apt install -y ninja-build
 
     - name: Build bash
+      if: steps.cache.outputs.cache-hit != 'true'
       run: ./scripts/build-libbash -j2
 
     - name: Build scallop
