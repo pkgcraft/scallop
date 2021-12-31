@@ -4,5 +4,3 @@ libscallop = shared_library(
   include_directories : [bash_includes],
   version : '5.1.12', soversion : '5',
 )
-
-demo = executable('demo', 'demo.c', link_with : libscallop)
