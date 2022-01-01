@@ -27,4 +27,5 @@ else
     dependencies : [bash_lib])
 endif
 
+incdir = include_directories(['src'])
 subdir('src')
