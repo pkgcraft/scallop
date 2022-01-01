@@ -1,6 +1,6 @@
 # scallop
 
-Scallop is a C library for bash.
+Scallop is a wrapper library for bash.
 
 ## Development
 
@@ -17,4 +17,7 @@ git clone https://github.com/pkgcraft/bash.git
 
 # build scallop
 meson setup build && meson compile -C build -v
+
+# build rust support
+cargo build
 ```

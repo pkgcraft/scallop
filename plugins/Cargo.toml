@@ -1,0 +1,19 @@
+[package]
+name = "scallop-plugins"
+version = "0.0.1"
+description = "Various plugins for bash using scallop"
+authors = ["Tim Harder <radhermit@gmail.com>"]
+homepage = "https://github.com/pkgcraft/scallop"
+repository = "https://github.com/pkgcraft/scallop"
+readme = "README.md"
+license = "GPL-3"
+edition = "2021"
+rust-version = "1.56"
+autotests = false
+
+[lib]
+name = "scallop"
+crate-type = ["cdylib"]
+
+[dependencies]
+scallop = { path = "../rust", version = "0.0.1" }
