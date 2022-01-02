@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
-use std::ptr;
+use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
@@ -36,21 +36,23 @@ pub type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
 
 #[repr(C)]
 pub struct Builtin {
-    pub name: *mut c_char,
+    pub name: *const c_char,
     pub function: BuiltinFnPtr,
     pub flags: c_int,
-    pub long_doc: *mut *const c_char,
+    pub long_doc: *const *const c_char,
     pub short_doc: *const c_char,
     pub handle: *mut c_char,
 }
 
 impl Builtin {
     fn disabled(name: &str) -> Self {
-        let name = CString::new(name).unwrap().into_raw();
+        let name_str = CString::new(name).unwrap();
+        let name = name_str.as_ptr();
+        mem::forget(name_str);
         Self {
-            name: name,
+            name,
             function: disabled,
-            flags: 1,
+            flags: 0,
             long_doc: ptr::null_mut(),
             short_doc: ptr::null_mut(),
             handle: ptr::null_mut(),
@@ -62,18 +64,32 @@ impl Builtin {
             Some(item) => *item,
             None => return Self::disabled(name),
         };
-        let name = CString::new(name).unwrap().into_raw();
-        let short_doc = CString::new(short_doc).unwrap().into_raw();
-        let long_doc: Vec<*mut c_char> = long_doc.split("\n")
-            .map(|s| CString::new(s).unwrap().into_raw())
+
+        let name_str = CString::new(name).unwrap();
+        let name = name_str.as_ptr();
+        mem::forget(name_str);
+
+        let short_doc_str = CString::new(short_doc).unwrap();
+        let short_doc = short_doc_str.as_ptr();
+        mem::forget(short_doc_str);
+
+        let long_doc_str: Vec<CString> = long_doc.split("\n")
+            .map(|s| CString::new(s).unwrap())
             .collect();
-        let long_doc = Box::into_raw(long_doc.into_boxed_slice()).cast();
+        let mut long_doc_ptr: Vec<*const c_char> = long_doc_str.iter()
+            .map(|s| s.as_ptr())
+            .collect();
+        long_doc_ptr.push(ptr::null());
+        let long_doc = long_doc_ptr.as_ptr();
+        mem::forget(long_doc_str);
+        mem::forget(long_doc_ptr);
+
         Self {
-            name: name,
+            name,
             function: run,
             flags: 1,
-            long_doc: long_doc,
-            short_doc: short_doc,
+            long_doc,
+            short_doc,
             handle: ptr::null_mut(),
         }
     }

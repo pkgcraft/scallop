@@ -13,8 +13,8 @@ pub unsafe fn current_command() -> &'static str {
 
 /// Get the string value of a given variable name.
 pub fn string_value(name: &str) -> Option<&str> {
-    let name = CString::new(name).unwrap().into_raw();
-    match unsafe { get_string_value(name) } {
+    let name = CString::new(name).unwrap();
+    match unsafe { get_string_value(name.as_ptr()) } {
         s if s.is_null() => None,
         s => Some(unsafe { CStr::from_ptr(s).to_str().unwrap() }),
     }
