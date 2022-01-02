@@ -1,6 +1,6 @@
 use pkgcraft::bash::{parse, version_split};
 
-use crate::bash::string_value;
+use crate::bash;
 use crate::{Error, Result};
 
 pub(crate) static SHORT_DOC: &str = "ver_rs 2 - 1.2.3";
@@ -11,7 +11,7 @@ Returns -1 on error.";
 
 #[doc = stringify!(LONG_DOC)]
 pub fn ver_rs(args: &[&str]) -> Result<i32> {
-    let pv = string_value("PV").unwrap_or("");
+    let pv = bash::string_value("PV").unwrap_or("");
     let (ver, args) = match args.len() {
         n if n < 2 => return Err(Error::new(format!("requires 2 or more args, got {}", n))),
 

@@ -2,7 +2,7 @@ use std::cmp;
 
 use pkgcraft::bash::{parse, version_split};
 
-use crate::bash::string_value;
+use crate::bash;
 use crate::{Error, Result};
 
 pub(crate) static SHORT_DOC: &str = "ver_cut 1-2 - 1.2.3";
@@ -13,7 +13,7 @@ Returns -1 on error.";
 
 #[doc = stringify!(LONG_DOC)]
 pub fn ver_cut(args: &[&str]) -> Result<i32> {
-    let pv = string_value("PV").unwrap_or("");
+    let pv = bash::string_value("PV").unwrap_or("");
     let (range, ver) = match args.len() {
         1 => (args[0], pv),
         2 => (args[0], args[1]),

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use pkgcraft::atom::Version;
 
-use crate::bash::string_value;
+use crate::bash;
 use crate::{Error, Result};
 
 pub(crate) static SHORT_DOC: &str = "ver_test 1 -lt 2-r1";
@@ -14,7 +14,7 @@ Returns -1 if an error occurred.";
 
 #[doc = stringify!(LONG_DOC)]
 pub fn ver_test(args: &[&str]) -> Result<i32> {
-    let pvr = string_value("PVR").unwrap_or("");
+    let pvr = bash::string_value("PVR").unwrap_or("");
     let (lhs, op, rhs) = match args.len() {
         2 if pvr.is_empty() => return Err(Error::new("$PVR is undefined")),
         2 => (pvr, args[0], args[1]),

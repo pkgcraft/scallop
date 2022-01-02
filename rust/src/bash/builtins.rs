@@ -6,8 +6,7 @@ use std::{mem, ptr};
 use once_cell::sync::Lazy;
 
 use super::command::{IntoVec, WordList};
-use super::current_command;
-use crate::Result;
+use crate::{bash, Result};
 
 pub mod has;
 pub mod hasv;
@@ -108,7 +107,7 @@ impl Builtin {
 #[no_mangle]
 pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
     // get the current running command name
-    let cmd = current_command();
+    let cmd = bash::current_command();
     // find its matching rust function and execute it
     let (func, _short_doc, _long_doc) = *BUILTINS.get(cmd).unwrap();
     let args = unsafe { list.into_vec().unwrap() };
@@ -127,7 +126,7 @@ pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
 #[no_mangle]
 pub(crate) extern "C" fn disabled(_list: *mut WordList) -> c_int {
     // get the current running command name
-    let cmd = current_command();
+    let cmd = bash::current_command();
     eprintln!("error: missing plugin support: {}", cmd);
     -1
 }
