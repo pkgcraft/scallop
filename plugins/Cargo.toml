@@ -12,7 +12,6 @@ rust-version = "1.56"
 autotests = false
 
 [lib]
-name = "scallop"
 crate-type = ["cdylib"]
 
 [features]
