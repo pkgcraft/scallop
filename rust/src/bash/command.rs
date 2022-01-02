@@ -17,7 +17,15 @@ pub struct WordList {
     pub word: *mut WordDesc,
 }
 
+/// Support conversion from a given object into a Vec<T>.
+///
+/// # Safety
+/// This assumes the object being converted contains valid data.
 pub unsafe trait IntoVec {
+    /// Convert a given object into a Vec<&str>.
+    ///
+    /// # Safety
+    /// This assumes the object being converted contains valid strings.
     unsafe fn into_vec<'a>(self) -> crate::Result<Vec<&'a str>>;
 }
 

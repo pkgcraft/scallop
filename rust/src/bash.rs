@@ -7,7 +7,7 @@ include!(concat!(env!("OUT_DIR"), "/bash-bindings.rs"));
 
 /// Get the currently running bash command name.
 #[inline]
-pub unsafe fn current_command() -> &'static str {
+pub fn current_command() -> &'static str {
     unsafe { CStr::from_ptr(this_command_name).to_str().unwrap() }
 }
 

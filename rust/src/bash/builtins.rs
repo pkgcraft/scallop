@@ -5,9 +5,9 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::Result;
-use super::current_command;
 use super::command::{IntoVec, WordList};
+use super::current_command;
+use crate::Result;
 
 pub mod has;
 pub mod hasv;
@@ -20,11 +20,12 @@ pub mod ver_test;
 
 type BuiltinFn = fn(&[&str]) -> Result<i32>;
 
+#[rustfmt::skip]
 static BUILTINS: Lazy<HashMap<&'static str, (BuiltinFn, &str, &str)>> = Lazy::new(|| {
     let mut builtins: Vec<(&str, (BuiltinFn, &str, &str))> = [
         ("has", (has::has as BuiltinFn, has::SHORT_DOC, has::LONG_DOC)),
         ("hasv", (hasv::hasv as BuiltinFn, hasv::SHORT_DOC, hasv::LONG_DOC)),
-    ].iter().cloned().collect();
+    ].to_vec();
 
     if cfg!(feature = "pkgcraft") {
         builtins.extend([
@@ -36,7 +37,6 @@ static BUILTINS: Lazy<HashMap<&'static str, (BuiltinFn, &str, &str)>> = Lazy::ne
 
     builtins.iter().cloned().collect()
 });
-
 
 type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
 
@@ -79,12 +79,12 @@ impl Builtin {
         let short_doc = short_doc_str.as_ptr();
         mem::forget(short_doc_str);
 
-        let long_doc_str: Vec<CString> = long_doc.split("\n")
+        let long_doc_str: Vec<CString> = long_doc
+            .split('\n')
             .map(|s| CString::new(s).unwrap())
             .collect();
-        let mut long_doc_ptr: Vec<*const c_char> = long_doc_str.iter()
-            .map(|s| s.as_ptr())
-            .collect();
+        let mut long_doc_ptr: Vec<*const c_char> =
+            long_doc_str.iter().map(|s| s.as_ptr()).collect();
         long_doc_ptr.push(ptr::null());
         let long_doc = long_doc_ptr.as_ptr();
         mem::forget(long_doc_str);
@@ -101,10 +101,14 @@ impl Builtin {
     }
 }
 
+/// Builtin function wrapper converting between rust and C types.
+///
+/// # Safety
+/// This should only be used when registering an external rust bash builtin.
 #[no_mangle]
 pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
     // get the current running command name
-    let cmd = unsafe { current_command() };
+    let cmd = current_command();
     // find its matching rust function and execute it
     let (func, _short_doc, _long_doc) = *BUILTINS.get(cmd).unwrap();
     let args = unsafe { list.into_vec().unwrap() };
@@ -121,9 +125,9 @@ pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
 }
 
 #[no_mangle]
-pub(crate) unsafe extern "C" fn disabled(_list: *mut WordList) -> c_int {
+pub(crate) extern "C" fn disabled(_list: *mut WordList) -> c_int {
     // get the current running command name
-    let cmd = unsafe { current_command() };
+    let cmd = current_command();
     eprintln!("error: missing plugin support: {}", cmd);
-    -1 as c_int
+    -1
 }

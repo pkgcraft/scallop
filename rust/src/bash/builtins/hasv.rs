@@ -1,5 +1,5 @@
-use crate::Result;
 use super::has::has;
+use crate::Result;
 
 pub(crate) static LONG_DOC: &str = "The same as has, but also prints the first argument if found.";
 pub(crate) static SHORT_DOC: &str = "hasv needle ${haystack}";
