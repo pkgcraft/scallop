@@ -6,4 +6,4 @@ pub mod error;
 
 pub use self::error::{Error, Result};
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+include!(concat!(env!("OUT_DIR"), "/scallop-bindings.rs"));

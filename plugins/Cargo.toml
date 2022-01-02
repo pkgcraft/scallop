@@ -15,5 +15,9 @@ autotests = false
 name = "scallop"
 crate-type = ["cdylib"]
 
+[features]
+default = ["pkgcraft"]
+pkgcraft = ["scallop/pkgcraft"]
+
 [dependencies]
 scallop = { path = "../rust", version = "0.0.1" }

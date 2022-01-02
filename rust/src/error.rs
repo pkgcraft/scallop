@@ -22,3 +22,10 @@ impl fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+#[cfg(feature = "pkgcraft")]
+impl From<pkgcraft::Error> for Error {
+    fn from(e: pkgcraft::Error) -> Self {
+        Error::new(e.to_string())
+    }
+}

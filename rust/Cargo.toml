@@ -15,8 +15,12 @@ autotests = false
 name = "scallop"
 path = "src/lib.rs"
 
+[features]
+default = ["pkgcraft"]
+
 [dependencies]
 once_cell = "1.8.0"
+pkgcraft = { path = "../../pkgcraft", version = "0.0.2", optional = true }
 
 [build-dependencies]
 bindgen = "0.59.2"
