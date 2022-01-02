@@ -5,7 +5,7 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use super::command::{IntoVec, WordList};
+use crate::bash::{IntoVec, WordList};
 use crate::{bash, Result};
 
 pub mod has;
