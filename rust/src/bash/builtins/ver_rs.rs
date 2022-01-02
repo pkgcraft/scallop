@@ -3,12 +3,11 @@ use pkgcraft::bash::{parse, version_split};
 use crate::bash::string_value;
 use crate::{Error, Result};
 
+pub(crate) static SHORT_DOC: &str = "ver_rs 2 - 1.2.3";
 pub(crate) static LONG_DOC: &str = "\
 Perform string substitution on package version strings.
 
 Returns -1 on error.";
-
-pub(crate) static SHORT_DOC: &str = "ver_rs 2 - 1.2.3";
 
 #[doc = stringify!(LONG_DOC)]
 pub fn ver_rs(args: &[&str]) -> Result<i32> {

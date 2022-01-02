@@ -12,7 +12,11 @@ use super::command::{IntoVec, WordList};
 pub mod has;
 pub mod hasv;
 #[cfg(feature = "pkgcraft")]
+pub mod ver_cut;
+#[cfg(feature = "pkgcraft")]
 pub mod ver_rs;
+#[cfg(feature = "pkgcraft")]
+pub mod ver_test;
 
 type BuiltinFn = fn(&[&str]) -> Result<i32>;
 
@@ -24,7 +28,9 @@ static BUILTINS: Lazy<HashMap<&'static str, (BuiltinFn, &str, &str)>> = Lazy::ne
 
     if cfg!(feature = "pkgcraft") {
         builtins.extend([
+            ("ver_cut", (ver_cut::ver_cut as BuiltinFn, ver_cut::SHORT_DOC, ver_cut::LONG_DOC)),
             ("ver_rs", (ver_rs::ver_rs as BuiltinFn, ver_rs::SHORT_DOC, ver_rs::LONG_DOC)),
+            ("ver_test", (ver_test::ver_test as BuiltinFn, ver_test::SHORT_DOC, ver_test::LONG_DOC)),
         ]);
     }
 
@@ -32,7 +38,7 @@ static BUILTINS: Lazy<HashMap<&'static str, (BuiltinFn, &str, &str)>> = Lazy::ne
 });
 
 
-pub type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
+type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
 
 #[repr(C)]
 pub struct Builtin {
