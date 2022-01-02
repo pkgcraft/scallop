@@ -1,66 +1,76 @@
 use std::collections::HashMap;
 use std::ffi::CString;
+use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_int};
 use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::bash::{IntoVec, WordList};
+use crate::bash::IntoVec;
+use crate::bash::bindings;
 use crate::{bash, Result};
 
-pub mod has;
-pub mod hasv;
+pub mod profile;
+
+// pkgcraft specific builtins
 #[cfg(feature = "pkgcraft")]
-pub mod ver_cut;
+pub mod pkg;
+// export pkgcraft builtins
 #[cfg(feature = "pkgcraft")]
-pub mod ver_rs;
-#[cfg(feature = "pkgcraft")]
-pub mod ver_test;
+pub use pkg::*;
 
 type BuiltinFn = fn(&[&str]) -> Result<i32>;
 
-#[rustfmt::skip]
-static BUILTINS: Lazy<HashMap<&'static str, (BuiltinFn, &str, &str)>> = Lazy::new(|| {
-    let mut builtins: Vec<(&str, (BuiltinFn, &str, &str))> = [
-        ("has", (has::has as BuiltinFn, has::SHORT_DOC, has::LONG_DOC)),
-        ("hasv", (hasv::hasv as BuiltinFn, hasv::SHORT_DOC, hasv::LONG_DOC)),
-    ].to_vec();
-
-    if cfg!(feature = "pkgcraft") {
-        builtins.extend([
-            ("ver_cut", (ver_cut::ver_cut as BuiltinFn, ver_cut::SHORT_DOC, ver_cut::LONG_DOC)),
-            ("ver_rs", (ver_rs::ver_rs as BuiltinFn, ver_rs::SHORT_DOC, ver_rs::LONG_DOC)),
-            ("ver_test", (ver_test::ver_test as BuiltinFn, ver_test::SHORT_DOC, ver_test::LONG_DOC)),
-        ]);
-    }
-
-    builtins.iter().cloned().collect()
-});
-
-type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
-
-#[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Builtin {
-    pub name: *const c_char,
-    pub function: BuiltinFnPtr,
-    pub flags: c_int,
-    pub long_doc: *const *const c_char,
-    pub short_doc: *const c_char,
-    pub handle: *mut c_char,
+    pub name: &'static str,
+    pub func: BuiltinFn,
+    pub help: &'static str,
+    pub usage: &'static str,
+}
+
+impl fmt::Debug for Builtin {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Builtin")
+         .field("name", &self.name)
+         .finish()
+    }
+}
+
+impl PartialEq for Builtin {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl Eq for Builtin {}
+
+impl Hash for Builtin {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
 }
 
 impl Builtin {
-    pub fn register(name: &str) -> Self {
-        let (_func, short_doc, long_doc) = *BUILTINS.get(name).unwrap();
-        let name_str = CString::new(name).unwrap();
+    #[inline]
+    pub fn run(self, args: &[&str]) -> Result<i32> {
+        (self.func)(args)
+    }
+}
+
+/// Convert a Builtin to its C equivalent.
+impl From<Builtin> for bindings::Builtin {
+    fn from(builtin: Builtin) -> bindings::Builtin {
+        let name_str = CString::new(builtin.name).unwrap();
         let name = name_str.as_ptr();
         mem::forget(name_str);
 
-        let short_doc_str = CString::new(short_doc).unwrap();
+        let short_doc_str = CString::new(builtin.usage).unwrap();
         let short_doc = short_doc_str.as_ptr();
         mem::forget(short_doc_str);
 
-        let long_doc_str: Vec<CString> = long_doc
+        let long_doc_str: Vec<CString> = builtin.help
             .split('\n')
             .map(|s| CString::new(s).unwrap())
             .collect();
@@ -71,7 +81,7 @@ impl Builtin {
         mem::forget(long_doc_str);
         mem::forget(long_doc_ptr);
 
-        Self {
+        bindings::Builtin {
             name,
             function: run,
             flags: 1,
@@ -82,19 +92,38 @@ impl Builtin {
     }
 }
 
+#[rustfmt::skip]
+static BUILTINS: Lazy<HashMap<&'static str, Builtin>> = Lazy::new(|| {
+    let mut builtins: Vec<(&str, Builtin)> = [
+        (profile::BUILTIN.name, profile::BUILTIN),
+    ].to_vec();
+
+    if cfg!(feature = "pkgcraft") {
+        builtins.extend([
+            (pkg::has::BUILTIN.name, pkg::has::BUILTIN),
+            (pkg::hasv::BUILTIN.name, pkg::hasv::BUILTIN),
+            (pkg::ver_cut::BUILTIN.name, pkg::ver_cut::BUILTIN),
+            (pkg::ver_rs::BUILTIN.name, pkg::ver_rs::BUILTIN),
+            (pkg::ver_test::BUILTIN.name, pkg::ver_test::BUILTIN),
+        ]);
+    }
+
+    builtins.iter().cloned().collect()
+});
+
 /// Builtin function wrapper converting between rust and C types.
 ///
 /// # Safety
 /// This should only be used when registering an external rust bash builtin.
 #[no_mangle]
-pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
+pub(crate) unsafe extern "C" fn run(list: *mut bindings::WordList) -> c_int {
     // get the current running command name
     let cmd = bash::current_command();
     // find its matching rust function and execute it
-    let (func, _short_doc, _long_doc) = *BUILTINS.get(cmd).unwrap();
+    let builtin = BUILTINS.get(cmd).unwrap();
     let args = unsafe { list.into_vec().unwrap() };
 
-    match func(args.as_slice()) {
+    match builtin.run(args.as_slice()) {
         Ok(ret) => ret,
         Err(e) => {
             eprintln!("{}: error: {}", cmd, e);

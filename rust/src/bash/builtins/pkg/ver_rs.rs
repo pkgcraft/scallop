@@ -1,16 +1,16 @@
 use pkgcraft::bash::{parse, version_split};
 
+use crate::bash::builtins::Builtin;
 use crate::bash;
 use crate::{Error, Result};
 
-pub(crate) static SHORT_DOC: &str = "ver_rs 2 - 1.2.3";
-pub(crate) static LONG_DOC: &str = "\
+static LONG_DOC: &str = "\
 Perform string substitution on package version strings.
 
 Returns -1 on error.";
 
 #[doc = stringify!(LONG_DOC)]
-pub fn ver_rs(args: &[&str]) -> Result<i32> {
+pub(crate) fn run(args: &[&str]) -> Result<i32> {
     let pv = bash::string_value("PV").unwrap_or("");
     let (ver, args) = match args.len() {
         n if n < 2 => return Err(Error::new(format!("requires 2 or more args, got {}", n))),
@@ -42,3 +42,10 @@ pub fn ver_rs(args: &[&str]) -> Result<i32> {
 
     Ok(0)
 }
+
+pub static BUILTIN: Builtin = Builtin {
+    name: "ver_rs",
+    func: run,
+    help: LONG_DOC,
+    usage: "ver_rs 2 - 1.2.3",
+};

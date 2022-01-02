@@ -2,18 +2,18 @@ use std::str::FromStr;
 
 use pkgcraft::atom::Version;
 
+use crate::bash::builtins::Builtin;
 use crate::bash;
 use crate::{Error, Result};
 
-pub(crate) static SHORT_DOC: &str = "ver_test 1 -lt 2-r1";
-pub(crate) static LONG_DOC: &str = "\
+static LONG_DOC: &str = "\
 Perform version testing as defined in the spec.
 
 Returns 0 if the specified test is true, 1 otherwise.
 Returns -1 if an error occurred.";
 
 #[doc = stringify!(LONG_DOC)]
-pub fn ver_test(args: &[&str]) -> Result<i32> {
+pub(crate) fn run(args: &[&str]) -> Result<i32> {
     let pvr = bash::string_value("PVR").unwrap_or("");
     let (lhs, op, rhs) = match args.len() {
         2 if pvr.is_empty() => return Err(Error::new("$PVR is undefined")),
@@ -37,3 +37,10 @@ pub fn ver_test(args: &[&str]) -> Result<i32> {
 
     Ok(!ret as i32)
 }
+
+pub static BUILTIN: Builtin = Builtin {
+    name: "ver_test",
+    func: run,
+    help: LONG_DOC,
+    usage: "ver_test 1 -lt 2-r1",
+};

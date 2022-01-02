@@ -2,17 +2,17 @@ use std::cmp;
 
 use pkgcraft::bash::{parse, version_split};
 
+use crate::bash::builtins::Builtin;
 use crate::bash;
 use crate::{Error, Result};
 
-pub(crate) static SHORT_DOC: &str = "ver_cut 1-2 - 1.2.3";
-pub(crate) static LONG_DOC: &str = "\
+static LONG_DOC: &str = "\
 Output substring from package version string and range arguments.
 
 Returns -1 on error.";
 
 #[doc = stringify!(LONG_DOC)]
-pub fn ver_cut(args: &[&str]) -> Result<i32> {
+pub(crate) fn run(args: &[&str]) -> Result<i32> {
     let pv = bash::string_value("PV").unwrap_or("");
     let (range, ver) = match args.len() {
         1 => (args[0], pv),
@@ -32,3 +32,10 @@ pub fn ver_cut(args: &[&str]) -> Result<i32> {
 
     Ok(0)
 }
+
+pub static BUILTIN: Builtin = Builtin {
+    name: "ver_cut", 
+    func: run,
+    help: LONG_DOC,
+    usage: "ver_cut 1-2 - 1.2.3",
+};

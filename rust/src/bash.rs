@@ -1,19 +1,18 @@
 use std::ffi::{CStr, CString};
 
+pub mod bindings;
 pub mod builtins;
-
-include!(concat!(env!("OUT_DIR"), "/bash-bindings.rs"));
 
 /// Get the currently running bash command name.
 #[inline]
 pub fn current_command() -> &'static str {
-    unsafe { CStr::from_ptr(this_command_name).to_str().unwrap() }
+    unsafe { CStr::from_ptr(bindings::this_command_name).to_str().unwrap() }
 }
 
 /// Get the string value of a given variable name.
 pub fn string_value(name: &str) -> Option<&str> {
     let name = CString::new(name).unwrap();
-    match unsafe { get_string_value(name.as_ptr()) } {
+    match unsafe { bindings::get_string_value(name.as_ptr()) } {
         s if s.is_null() => None,
         s => Some(unsafe { CStr::from_ptr(s).to_str().unwrap() }),
     }
@@ -31,7 +30,7 @@ pub unsafe trait IntoVec {
     unsafe fn into_vec<'a>(self) -> crate::Result<Vec<&'a str>>;
 }
 
-unsafe impl IntoVec for *mut WordList {
+unsafe impl IntoVec for *mut bindings::WordList {
     unsafe fn into_vec<'a>(self) -> crate::Result<Vec<&'a str>> {
         let mut list = self;
         let mut vec = Vec::new();
