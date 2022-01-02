@@ -23,7 +23,7 @@ fn main() {
     // generate scallop-specific bindings
     // link to the scallop library
     println!("cargo:rustc-link-lib=scallop");
-    //println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=../src/scallop.h");
 
     let bindings = bindgen::Builder::default()
         // header to generate bindings for
