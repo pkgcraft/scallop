@@ -50,26 +50,8 @@ pub struct Builtin {
 }
 
 impl Builtin {
-    fn disabled(name: &str) -> Self {
-        let name_str = CString::new(name).unwrap();
-        let name = name_str.as_ptr();
-        mem::forget(name_str);
-        Self {
-            name,
-            function: disabled,
-            flags: 0,
-            long_doc: ptr::null_mut(),
-            short_doc: ptr::null_mut(),
-            handle: ptr::null_mut(),
-        }
-    }
-
     pub fn register(name: &str) -> Self {
-        let (_func, short_doc, long_doc) = match BUILTINS.get(name) {
-            Some(item) => *item,
-            None => return Self::disabled(name),
-        };
-
+        let (_func, short_doc, long_doc) = *BUILTINS.get(name).unwrap();
         let name_str = CString::new(name).unwrap();
         let name = name_str.as_ptr();
         mem::forget(name_str);
@@ -121,12 +103,4 @@ pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
     };
 
     ret as c_int
-}
-
-#[no_mangle]
-pub(crate) extern "C" fn disabled(_list: *mut WordList) -> c_int {
-    // get the current running command name
-    let cmd = bash::current_command();
-    eprintln!("error: missing plugin support: {}", cmd);
-    -1
 }

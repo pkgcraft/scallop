@@ -1,15 +1,12 @@
 use scallop::bash::builtins::Builtin;
 
+#[cfg(feature = "pkgcraft")]
+pub mod pkgcraft;
+
 #[export_name = "has_struct"]
 static mut HAS_STRUCT: Option<Builtin> = None;
 #[export_name = "hasv_struct"]
 static mut HASV_STRUCT: Option<Builtin> = None;
-#[export_name = "ver_cut_struct"]
-static mut VER_CUT_STRUCT: Option<Builtin> = None;
-#[export_name = "ver_rs_struct"]
-static mut VER_RS_STRUCT: Option<Builtin> = None;
-#[export_name = "ver_test_struct"]
-static mut VER_TEST_STRUCT: Option<Builtin> = None;
 
 #[used]
 #[link_section = ".init_array"]
@@ -20,8 +17,5 @@ extern "C" fn initialize_builtins() {
     unsafe {
         HAS_STRUCT = Some(Builtin::register("has"));
         HASV_STRUCT = Some(Builtin::register("hasv"));
-        VER_CUT_STRUCT = Some(Builtin::register("ver_cut"));
-        VER_RS_STRUCT = Some(Builtin::register("ver_rs"));
-        VER_TEST_STRUCT = Some(Builtin::register("ver_test"));
     }
 }
