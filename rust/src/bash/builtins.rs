@@ -94,13 +94,11 @@ pub(crate) unsafe extern "C" fn run(list: *mut WordList) -> c_int {
     let (func, _short_doc, _long_doc) = *BUILTINS.get(cmd).unwrap();
     let args = unsafe { list.into_vec().unwrap() };
 
-    let ret = match func(args.as_slice()) {
+    match func(args.as_slice()) {
         Ok(ret) => ret,
         Err(e) => {
             eprintln!("{}: error: {}", cmd, e);
             -1
         }
-    };
-
-    ret as c_int
+    }
 }
