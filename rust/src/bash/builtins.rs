@@ -94,21 +94,21 @@ impl From<Builtin> for bindings::Builtin {
 
 #[rustfmt::skip]
 static BUILTINS: Lazy<HashMap<&'static str, Builtin>> = Lazy::new(|| {
-    let mut builtins: Vec<(&str, Builtin)> = [
-        (profile::BUILTIN.name, profile::BUILTIN),
-    ].to_vec();
-
+    let mut builtins: Vec<Builtin> = vec![profile::BUILTIN];
     if cfg!(feature = "pkgcraft") {
         builtins.extend([
-            (pkg::has::BUILTIN.name, pkg::has::BUILTIN),
-            (pkg::hasv::BUILTIN.name, pkg::hasv::BUILTIN),
-            (pkg::ver_cut::BUILTIN.name, pkg::ver_cut::BUILTIN),
-            (pkg::ver_rs::BUILTIN.name, pkg::ver_rs::BUILTIN),
-            (pkg::ver_test::BUILTIN.name, pkg::ver_test::BUILTIN),
+            pkg::has::BUILTIN,
+            pkg::hasv::BUILTIN,
+            pkg::ver_cut::BUILTIN,
+            pkg::ver_rs::BUILTIN,
+            pkg::ver_test::BUILTIN,
         ]);
     }
 
-    builtins.iter().cloned().collect()
+    builtins.iter()
+        .cloned()
+        .map(|b| (b.name, b))
+        .collect()
 });
 
 /// Builtin function wrapper converting between rust and C types.
