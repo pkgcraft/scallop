@@ -12,19 +12,48 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        rust-version: ['1.56.0', '1.57.0']
 
     steps:
+    - name: Checkout pkgcraft
+      uses: actions/checkout@v2
+      with:
+        repository: pkgcraft/pkgcraft
+        path: pkgcraft
+
+    - name: Move pkgcraft into expected location
+      run: mv pkgcraft ../
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
         submodules: true
 
+    - name: Update deps
+      run: cargo update
+
     - name: Set up cache
       uses: actions/cache@v2
       id: cache
       with:
-        path: bash
-        key: v3-${{ runner.os }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}
+        path: |
+          ~/.cargo/bin
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+          ~/.cargo/git/db
+          ~/.rustup
+          bash
+          target
+        key: v1-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-cargo-${{ hashFiles('Cargo.lock') }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}
+        restore-keys: v1-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-cargo-
+
+    - name: Set up rust toolchain ${{ matrix.rust-version }}
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust-version }}
+        profile: minimal
+        override: true
+        components: rustfmt
 
     - name: Install meson
       run: pip3 install meson
@@ -54,7 +83,15 @@ jobs:
         rm bash/libbash.a
         libtool -static -o bash/libbash.a -arch_only x86_64 $(find bash -name *.a)
 
-    - name: Build scallop
+    - name: Build C library
       run: |
         meson setup build
         meson compile -C build -v
+        # add build directory to library search path
+        echo "LD_LIBRARY_PATH=${PWD}/build/src" >> $GITHUB_ENV
+
+    - name: Build rust projects
+      run: cargo build
+
+    - name: Test rust projects
+      run: cargo test
