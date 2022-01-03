@@ -50,6 +50,7 @@ fn main() {
     // generate bash-specific bindings
     println!("cargo:rerun-if-changed=bash-wrapper.h");
     let bindings = bindgen::Builder::default()
+        // add include dirs for clang
         .clang_arg(format!("-I{}", repo_dir))
         .clang_arg(format!("-I{}/bash", repo_dir))
         .clang_arg(format!("-I{}/bash/include", repo_dir))
@@ -60,6 +61,8 @@ fn main() {
         .allowlist_type("word_list")
         // execute_command.h
         .allowlist_var("this_command_name")
+        // shell.h
+        .allowlist_function("bash_main")
         // variables.h
         .allowlist_function("get_string_value")
         // invalidate built crate whenever any included header file changes

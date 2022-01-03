@@ -15,6 +15,11 @@ autotests = false
 name = "scallop"
 path = "src/lib.rs"
 
+[[bin]]
+bench = false
+path = "src/main.rs"
+name = "scallop"
+
 [features]
 default = ["pkgcraft"]
 

@@ -5,3 +5,4 @@
 #include "bash/command.h"
 #include "bash/execute_cmd.h"
 #include "bash/variables.h"
+#include "bash/shell.h"
