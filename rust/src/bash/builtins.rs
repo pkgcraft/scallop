@@ -91,7 +91,6 @@ impl From<Builtin> for bindings::Builtin {
     }
 }
 
-#[rustfmt::skip]
 static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
     let mut builtins: Vec<&Builtin> = vec![&profile::BUILTIN];
     if cfg!(feature = "pkgcraft") {
@@ -104,9 +103,7 @@ static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
         ]);
     }
 
-    builtins.iter()
-        .map(|&b| (b.name, b))
-        .collect()
+    builtins.iter().map(|&b| (b.name, b)).collect()
 });
 
 /// Builtin function wrapper converting between rust and C types.
