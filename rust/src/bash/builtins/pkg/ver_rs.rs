@@ -33,12 +33,11 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
     let mut args_iter = args.chunks_exact(2);
     while let Some(&[range, sep]) = args_iter.next() {
         let (start, end) = parse::range(range, version_parts.len() / 2)?;
-        for n in start..=end {
-            let idx = n * 2;
-            if idx < version_parts.len() {
-                version_parts[idx] = sep;
-            }
-        }
+        let len = version_parts.len();
+        (start..=end)
+            .map(|i| i * 2)
+            .take_while(|i| i < &len)
+            .for_each(|i| version_parts[i] = sep);
     }
 
     println!("{}", version_parts.join(""));
