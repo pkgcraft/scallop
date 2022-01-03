@@ -19,7 +19,10 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
         n if n % 2 == 0 => (pv, args),
 
         // odd number of args uses the last arg as the version
-        _ => (*args.last().unwrap(), &args[..args.len() - 1]),
+        _ => {
+            let idx = args.len() - 1;
+            (args[idx], &args[..idx])
+        }
     };
 
     // Split version string into separators and components, note that the version string doesn't
