@@ -16,19 +16,15 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-
-    - name: Checkout bash
-      uses: actions/checkout@v2
       with:
-        repository: pkgcraft/bash
-        path: bash
+        submodules: true
 
     - name: Set up cache
       uses: actions/cache@v2
       id: cache
       with:
         path: bash
-        key: v3-${{ runner.os }}-bash-${{ hashFiles('bash/.git/refs/heads/main') }}
+        key: v3-${{ runner.os }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}
 
     - name: Install meson
       run: pip3 install meson

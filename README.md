@@ -8,9 +8,8 @@ To build scallop, run the following commands:
 
 ```bash
 # clone repos
-git clone https://github.com/pkgcraft/scallop.git
+git clone --recurse-submodules https://github.com/pkgcraft/scallop.git
 cd scallop
-git clone https://github.com/pkgcraft/bash.git
 
 # build libbash
 ./scripts/build-libbash -j16
