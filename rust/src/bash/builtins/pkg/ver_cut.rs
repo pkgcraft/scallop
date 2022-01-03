@@ -2,8 +2,8 @@ use std::cmp;
 
 use pkgcraft::bash::{parse, version_split};
 
-use crate::bash::builtins::Builtin;
 use crate::bash;
+use crate::bash::builtins::Builtin;
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "\
@@ -34,7 +34,7 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
 }
 
 pub static BUILTIN: Builtin = Builtin {
-    name: "ver_cut", 
+    name: "ver_cut",
     func: run,
     help: LONG_DOC,
     usage: "ver_cut 1-2 - 1.2.3",

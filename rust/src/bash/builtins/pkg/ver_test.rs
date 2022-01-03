@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 use pkgcraft::atom::Version;
 
-use crate::bash::builtins::Builtin;
 use crate::bash;
+use crate::bash::builtins::Builtin;
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "\

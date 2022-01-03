@@ -6,7 +6,11 @@ pub mod builtins;
 /// Get the currently running bash command name.
 #[inline]
 pub fn current_command() -> &'static str {
-    unsafe { CStr::from_ptr(bindings::this_command_name).to_str().unwrap() }
+    unsafe {
+        CStr::from_ptr(bindings::this_command_name)
+            .to_str()
+            .unwrap()
+    }
 }
 
 /// Get the string value of a given variable name.

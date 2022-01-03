@@ -7,8 +7,8 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::bash::IntoVec;
 use crate::bash::bindings;
+use crate::bash::IntoVec;
 use crate::{bash, Result};
 
 pub mod profile;
@@ -32,9 +32,7 @@ pub struct Builtin {
 
 impl fmt::Debug for Builtin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Builtin")
-         .field("name", &self.name)
-         .finish()
+        f.debug_struct("Builtin").field("name", &self.name).finish()
     }
 }
 
@@ -70,7 +68,8 @@ impl From<Builtin> for bindings::Builtin {
         let short_doc = short_doc_str.as_ptr();
         mem::forget(short_doc_str);
 
-        let long_doc_str: Vec<CString> = builtin.help
+        let long_doc_str: Vec<CString> = builtin
+            .help
             .split('\n')
             .map(|s| CString::new(s).unwrap())
             .collect();

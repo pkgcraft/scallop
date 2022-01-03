@@ -1,7 +1,7 @@
 use pkgcraft::bash::{parse, version_split};
 
-use crate::bash::builtins::Builtin;
 use crate::bash;
+use crate::bash::builtins::Builtin;
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "\
