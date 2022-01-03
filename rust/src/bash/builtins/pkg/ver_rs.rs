@@ -32,8 +32,8 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
     // iterate over (range, separator) pairs
     let mut args_iter = args.chunks_exact(2);
     while let Some(&[range, sep]) = args_iter.next() {
-        let (start, end) = parse::range(range, version_parts.len() / 2)?;
         let len = version_parts.len();
+        let (start, end) = parse::range(range, len / 2)?;
         (start..=end)
             .map(|i| i * 2)
             .take_while(|i| i < &len)
