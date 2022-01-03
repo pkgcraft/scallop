@@ -1,4 +1,9 @@
-/bash
+# meson
 /build
 
+# rust
+Cargo.lock
+/target
+
+# misc
 .gdb_history
