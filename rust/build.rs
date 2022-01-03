@@ -50,10 +50,21 @@ fn main() {
     // generate bash-specific bindings
     println!("cargo:rerun-if-changed=bash-wrapper.h");
     let bindings = bindgen::Builder::default()
-        // header to generate bindings for
+        .clang_arg(format!("-I{}", repo_dir))
+        .clang_arg(format!("-I{}/bash", repo_dir))
+        .clang_arg(format!("-I{}/bash/include", repo_dir))
+        .clang_arg(format!("-I{}/bash/builtins", repo_dir))
         .header("bash-wrapper.h")
+        // command.h
+        .allowlist_type("word_desc")
+        .allowlist_type("word_list")
+        // execute_command.h
+        .allowlist_var("this_command_name")
+        // variables.h
+        .allowlist_function("get_string_value")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        // mangle type names to expected values
         .parse_callbacks(Box::new(BashCallback))
         .generate()
         .expect("Unable to generate bindings");
