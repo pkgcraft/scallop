@@ -21,13 +21,13 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
     };
 
     let version_parts = version_split(ver);
-    let max_idx = version_parts.len();
-    let (start, end) = parse::range(range, version_parts.len() / 2)?;
+    let len = version_parts.len();
+    let (start, end) = parse::range(range, len / 2)?;
     let start_idx = match start {
         0 => 0,
-        n => cmp::min(n * 2 - 1, max_idx),
+        n => cmp::min(n * 2 - 1, len),
     };
-    let end_idx = cmp::min(end * 2, max_idx);
+    let end_idx = cmp::min(end * 2, len);
     println!("{}", &version_parts[start_idx..end_idx].join(""));
 
     Ok(0)
