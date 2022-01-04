@@ -56,7 +56,7 @@ jobs:
         components: rustfmt
 
     - name: Install meson
-      run: pip3 install meson
+      run: sudo pip3 install meson
 
     - name: Install ninja
       uses: seanmiddleditch/gha-setup-ninja@master
@@ -76,20 +76,14 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: ./scripts/build-libbash -j2
 
-    - name: Build C library
+    - name: Build and install C library
       run: |
         meson setup build
         meson compile -C build -v
-
-        # add build directory to linux library search path
-        echo "LD_LIBRARY_PATH=${PWD}/build" >> $GITHUB_ENV
-        # add build directory to macos library search path
-        echo "DYLD_FALLBACK_LIBRARY_PATH=${PWD}/build" >> $GITHUB_ENV
+        sudo env "PATH=$PATH" meson install -C build
 
     - name: Build rust projects
       run: cargo build
 
     - name: Test rust projects
-      # currently macos fails to find the built shared library
-      if: matrix.os == 'ubuntu-latest'
       run: cargo test

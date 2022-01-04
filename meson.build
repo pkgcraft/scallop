@@ -32,6 +32,7 @@ scallop_lib = shared_library(
   dependencies : [bash_dep, dl_dep],
   include_directories : [bash_includes],
   version : '5.1.12', soversion : '5',
+  install : true,
 )
 
 # requires external static lib support to be implemented via static_library()
