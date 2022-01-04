@@ -44,8 +44,8 @@ jobs:
           ~/.rustup
           bash
           target
-        key: v1-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
-        restore-keys: v1-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
+        key: v2-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
+        restore-keys: v2-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
 
     - name: Set up rust toolchain ${{ matrix.rust-version }}
       uses: actions-rs/toolchain@v1
@@ -68,13 +68,9 @@ jobs:
         echo "CC=clang" >> $GITHUB_ENV
         echo "CFLAGS=-arch x86_64" >> $GITHUB_ENV
 
-        # install packages required for unicode support
-        # (required if --disable-nls isn't set for bash)
-        brew install libiconv
-
     - name: Build bash
       if: steps.cache.outputs.cache-hit != 'true'
-      run: ./scripts/build-libbash -j2
+      run: ./scripts/build-libbash -j2 -- --disable-nls
 
     - name: Build and install C library
       run: |
