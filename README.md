@@ -1,6 +1,6 @@
 # scallop
 
-Rust-based wrapper library and executable for bash. It enables writing bash
+Rust-based library and executable that wrap bash. It enables writing bash
 builtins natively in rust and running them in either standard bash (with
 loadable builtin support enabled) or via the scallop executable.
 
