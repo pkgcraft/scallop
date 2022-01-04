@@ -19,4 +19,4 @@ default = ["pkgcraft"]
 pkgcraft = ["scallop/pkgcraft"]
 
 [dependencies]
-scallop = { path = "../rust", version = "0.0.1" }
+scallop = { path = "../scallop", version = "0.0.1" }
