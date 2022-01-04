@@ -4,6 +4,11 @@ include!(concat!(env!("OUT_DIR"), "/bash-bindings.rs"));
 
 type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
 
+// Manually define builtin struct since bindgen doesn't support non-null function pointers yet.
+// Wrapping the function pointer field member in Option<fn> causes bash to segfault when loading
+// a struct during an `enable -f /path/to/lib.so builtin` call.
+//
+// Related upstream issue: https://github.com/rust-lang/rust-bindgen/issues/1278
 #[repr(C)]
 pub struct Builtin {
     pub name: *const c_char,
