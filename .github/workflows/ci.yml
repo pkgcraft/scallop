@@ -76,13 +76,6 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: ./scripts/build-libbash -j2
 
-    - name: Fix bash library for macos
-      if: matrix.os == 'macos-latest' && steps.cache.outputs.cache-hit != 'true'
-      run: |
-        # combine static archives in a way that macos supports
-        rm bash/libbash.a
-        libtool -static -o bash/libbash.a -arch_only x86_64 $(find bash -name *.a)
-
     - name: Build C library
       run: |
         meson setup build
