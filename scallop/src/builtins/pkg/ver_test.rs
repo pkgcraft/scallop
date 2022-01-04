@@ -2,9 +2,8 @@ use std::str::FromStr;
 
 use pkgcraft::atom::Version;
 
-use crate::bash;
-use crate::bash::builtins::Builtin;
-use crate::{Error, Result};
+use crate::builtins::Builtin;
+use crate::{string_value, Error, Result};
 
 static LONG_DOC: &str = "\
 Perform version testing as defined in the spec.
@@ -14,7 +13,7 @@ Returns -1 if an error occurred.";
 
 #[doc = stringify!(LONG_DOC)]
 pub(crate) fn run(args: &[&str]) -> Result<i32> {
-    let pvr = bash::string_value("PVR").unwrap_or("");
+    let pvr = string_value("PVR").unwrap_or("");
     let (lhs, op, rhs) = match args.len() {
         2 if pvr.is_empty() => return Err(Error::new("$PVR is undefined")),
         2 => (pvr, args[0], args[1]),

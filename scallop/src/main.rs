@@ -2,7 +2,7 @@ use std::os::raw::{c_char, c_int};
 use std::ffi::CString;
 use std::{env, mem, process, ptr};
 
-use scallop::bash::bindings::bash_main;
+use scallop::bindings::bash_main;
 
 fn main() {
     let argv_strs: Vec<CString> = env::args()

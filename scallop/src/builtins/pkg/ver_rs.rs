@@ -1,8 +1,7 @@
 use pkgcraft::bash::{parse, version_split};
 
-use crate::bash;
-use crate::bash::builtins::Builtin;
-use crate::{Error, Result};
+use crate::builtins::Builtin;
+use crate::{string_value, Error, Result};
 
 static LONG_DOC: &str = "\
 Perform string substitution on package version strings.
@@ -11,7 +10,7 @@ Returns -1 on error.";
 
 #[doc = stringify!(LONG_DOC)]
 pub(crate) fn run(args: &[&str]) -> Result<i32> {
-    let pv = bash::string_value("PV").unwrap_or("");
+    let pv = string_value("PV").unwrap_or("");
     let (ver, args) = match args.len() {
         n if n < 2 => return Err(Error::new(format!("requires 2 or more args, got {}", n))),
 

@@ -1,4 +1,4 @@
-use crate::bash::builtins::Builtin;
+use crate::builtins::Builtin;
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "\

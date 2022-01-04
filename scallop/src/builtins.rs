@@ -7,9 +7,9 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::bash::bindings;
-use crate::bash::IntoVec;
-use crate::{bash, Result};
+use crate::bindings;
+use crate::traits::IntoVec;
+use crate::{current_command, Result};
 
 pub mod profile;
 
@@ -109,11 +109,11 @@ static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
 /// Builtin function wrapper converting between rust and C types.
 ///
 /// # Safety
-/// This should only be used when registering an external rust bash builtin.
+/// This should only be used when registering an external builtin.
 #[no_mangle]
 pub(crate) unsafe extern "C" fn run(list: *mut bindings::WordList) -> c_int {
     // get the current running command name
-    let cmd = bash::current_command();
+    let cmd = current_command();
     // find its matching rust function and execute it
     let builtin = BUILTINS.get(cmd).unwrap();
     let args = unsafe { list.into_vec().unwrap() };

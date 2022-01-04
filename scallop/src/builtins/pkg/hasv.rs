@@ -1,5 +1,5 @@
 use super::has;
-use crate::bash::builtins::Builtin;
+use crate::builtins::Builtin;
 use crate::Result;
 
 static LONG_DOC: &str = "The same as has, but also prints the first argument if found.";

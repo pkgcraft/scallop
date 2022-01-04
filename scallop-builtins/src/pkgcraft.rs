@@ -1,5 +1,5 @@
-use scallop::bash::bindings;
-use scallop::bash::builtins::*;
+use scallop::bindings;
+use scallop::builtins::*;
 
 #[export_name = "has_struct"]
 static mut HAS_STRUCT: Option<bindings::Builtin> = None;
