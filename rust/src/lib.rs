@@ -5,5 +5,3 @@ pub mod bash;
 pub mod error;
 
 pub use self::error::{Error, Result};
-
-include!(concat!(env!("OUT_DIR"), "/scallop-bindings.rs"));

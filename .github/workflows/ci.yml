@@ -89,9 +89,9 @@ jobs:
         meson compile -C build -v
 
         # add build directory to linux library search path
-        echo "LD_LIBRARY_PATH=${PWD}/build/src" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=${PWD}/build" >> $GITHUB_ENV
         # add build directory to macos library search path
-        echo "DYLD_FALLBACK_LIBRARY_PATH=${PWD}/build/src" >> $GITHUB_ENV
+        echo "DYLD_FALLBACK_LIBRARY_PATH=${PWD}/build" >> $GITHUB_ENV
 
     - name: Build rust projects
       run: cargo build

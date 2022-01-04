@@ -21,40 +21,29 @@ impl ParseCallbacks for BashCallback {
 }
 
 fn main() {
-    // generate scallop-specific bindings
     let repo_dir_path = fs::canonicalize(format!("{}/../", env!("CARGO_MANIFEST_DIR"))).unwrap();
     let repo_dir = repo_dir_path.to_str().unwrap();
-    let scallop_build_dir = format!("{}/build/src", repo_dir);
-    let scallop_src_dir = format!("{}/src", repo_dir);
-    let scallop_header = format!("{}/scallop.h", scallop_src_dir);
+    let scallop_build_dir = format!("{}/build", repo_dir);
+    // link with scallop lib
     println!("cargo:rustc-link-search=native={}", scallop_build_dir);
     println!("cargo:rustc-link-lib=dylib=scallop");
-    println!("cargo:rerun-if-changed={}", scallop_header);
+
+    // used for static build
+    //println!("cargo:rustc-link-search=native={}", bash_dir);
+    //println!("cargo:rustc-link-lib=static=scallop");
 
     // https://github.com/rust-lang/cargo/issues/4895
     println!("cargo:rustc-env=LD_LIBRARY_PATH={}", scallop_build_dir);
 
-    let bindings = bindgen::Builder::default()
-        // header to generate bindings for
-        .header(scallop_header)
-        // invalidate built crate whenever any included header file changes
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .generate()
-        .expect("Unable to generate bindings");
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("scallop-bindings.rs"))
-        .expect("Couldn't write bindings!");
-
-    // generate bash-specific bindings
+    // generate bash bindings
+    let bash_dir = format!("{}/bash", repo_dir);
     println!("cargo:rerun-if-changed=bash-wrapper.h");
     let bindings = bindgen::Builder::default()
         // add include dirs for clang
         .clang_arg(format!("-I{}", repo_dir))
-        .clang_arg(format!("-I{}/bash", repo_dir))
-        .clang_arg(format!("-I{}/bash/include", repo_dir))
-        .clang_arg(format!("-I{}/bash/builtins", repo_dir))
+        .clang_arg(format!("-I{}", bash_dir))
+        .clang_arg(format!("-I{}/include", bash_dir))
+        .clang_arg(format!("-I{}/builtins", bash_dir))
         .header("bash-wrapper.h")
         // command.h
         .allowlist_type("word_desc")

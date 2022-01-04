@@ -27,5 +27,21 @@ else
     dependencies : [bash_lib])
 endif
 
-incdir = include_directories(['src'])
-subdir('src')
+scallop_lib = shared_library(
+  'scallop',
+  dependencies : [bash_dep, dl_dep],
+  include_directories : [bash_includes],
+  version : '5.1.12', soversion : '5',
+)
+
+# requires external static lib support to be implemented via static_library()
+# https://github.com/mesonbuild/meson/issues/9204
+scallop_static = custom_target(
+  'libscallop.a',
+  output : 'libscallop.a',
+  build_by_default : true,
+  command : [
+    'cp',
+    join_paths(bash_libdir, 'libbash.a'),
+    join_paths(meson.current_build_dir(), 'libscallop.a')],
+)
