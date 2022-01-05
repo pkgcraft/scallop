@@ -10,13 +10,16 @@ pub mod traits;
 
 pub use self::error::{Error, Result};
 
-/// Get the currently running command name.
+/// Get the currently running command name if one exists.
 #[inline]
-pub fn current_command() -> &'static str {
-    unsafe {
-        CStr::from_ptr(bindings::this_command_name)
-            .to_str()
-            .unwrap()
+pub fn current_command<'a>() -> Option<&'a str> {
+    let cmd_ptr = unsafe { bindings::this_command_name };
+    match cmd_ptr.is_null() {
+        true => None,
+        false => {
+            let cmd = unsafe { CStr::from_ptr(cmd_ptr).to_str().unwrap() };
+            Some(cmd)
+        }
     }
 }
 

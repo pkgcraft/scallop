@@ -113,9 +113,9 @@ static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
 #[no_mangle]
 pub(crate) unsafe extern "C" fn run(list: *mut bindings::WordList) -> c_int {
     // get the current running command name
-    let cmd = current_command();
+    let cmd = current_command().expect("failed getting current command");
     // find its matching rust function and execute it
-    let builtin = BUILTINS.get(cmd).unwrap();
+    let builtin = BUILTINS.get(cmd).expect(&format!("unknown builtin: {}", cmd));
     let args = unsafe { list.into_vec().unwrap() };
 
     match builtin.run(args.as_slice()) {
