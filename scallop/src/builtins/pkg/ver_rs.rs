@@ -35,7 +35,11 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
         (start..=end)
             .map(|i| i * 2)
             .take_while(|i| i < &len)
-            .for_each(|i| version_parts[i] = sep);
+            .for_each(|i| {
+                if (i > 0 && i < len - 1) || !version_parts[i].is_empty() {
+                    version_parts[i] = sep;
+                }
+            });
     }
 
     println!("{}", version_parts.join(""));
