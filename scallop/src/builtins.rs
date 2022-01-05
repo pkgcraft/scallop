@@ -111,7 +111,7 @@ static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
 /// # Safety
 /// This should only be used when registering an external builtin.
 #[no_mangle]
-pub(crate) unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
+unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
     // get the current running command name
     let cmd = current_command().expect("failed getting current command");
     // find its matching rust function and execute it
