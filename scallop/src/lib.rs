@@ -3,7 +3,7 @@
 
 use std::ffi::{CStr, CString};
 
-pub mod bindings;
+pub mod bash;
 pub mod builtins;
 pub mod command;
 pub mod error;
@@ -14,7 +14,7 @@ pub use self::error::{Error, Result};
 /// Get the currently running command name if one exists.
 #[inline]
 pub fn current_command<'a>() -> Option<&'a str> {
-    let cmd_ptr = unsafe { bindings::CURRENT_COMMAND };
+    let cmd_ptr = unsafe { bash::CURRENT_COMMAND };
     match cmd_ptr.is_null() {
         true => None,
         false => {
@@ -27,7 +27,7 @@ pub fn current_command<'a>() -> Option<&'a str> {
 /// Get the string value of a given variable name.
 pub fn string_value(name: &str) -> Option<&str> {
     let name = CString::new(name).unwrap();
-    match unsafe { bindings::get_string_value(name.as_ptr()) } {
+    match unsafe { bash::get_string_value(name.as_ptr()) } {
         s if s.is_null() => None,
         s => Some(unsafe { CStr::from_ptr(s).to_str().unwrap() }),
     }

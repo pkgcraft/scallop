@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use crate::bindings::WordList;
+use crate::bash::WordList;
 
 /// Support conversion from a given object into a Vec<T>.
 ///

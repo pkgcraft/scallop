@@ -1,8 +1,8 @@
-use scallop::bindings;
+use scallop::bash;
 use scallop::builtins::*;
 
 #[export_name = "profile_struct"]
-static mut PROFILE_STRUCT: Option<bindings::Builtin> = None;
+static mut PROFILE_STRUCT: Option<bash::Builtin> = None;
 
 #[cfg(target_os = "linux")]
 #[used]

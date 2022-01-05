@@ -7,7 +7,7 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::bindings;
+use crate::bash;
 use crate::traits::IntoVec;
 use crate::{current_command, Result};
 
@@ -58,8 +58,8 @@ impl Builtin {
 }
 
 /// Convert a Builtin to its C equivalent.
-impl From<Builtin> for bindings::Builtin {
-    fn from(builtin: Builtin) -> bindings::Builtin {
+impl From<Builtin> for bash::Builtin {
+    fn from(builtin: Builtin) -> bash::Builtin {
         let name_str = CString::new(builtin.name).unwrap();
         let name = name_str.as_ptr();
         mem::forget(name_str);
@@ -80,7 +80,7 @@ impl From<Builtin> for bindings::Builtin {
         mem::forget(long_doc_str);
         mem::forget(long_doc_ptr);
 
-        bindings::Builtin {
+        bash::Builtin {
             name,
             function: run,
             flags: 1,
@@ -111,7 +111,7 @@ static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
 /// # Safety
 /// This should only be used when registering an external builtin.
 #[no_mangle]
-pub(crate) unsafe extern "C" fn run(list: *mut bindings::WordList) -> c_int {
+pub(crate) unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
     // get the current running command name
     let cmd = current_command().expect("failed getting current command");
     // find its matching rust function and execute it

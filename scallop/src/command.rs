@@ -2,25 +2,25 @@ use std::ffi::CString;
 use std::ptr;
 use std::str::FromStr;
 
-use crate::bindings;
+use crate::bash;
 use crate::Error;
 
 #[derive(Debug)]
 pub struct Command {
-    ptr: *mut bindings::Command,
+    ptr: *mut bash::Command,
 }
 
 unsafe impl Send for Command {}
 
 impl Command {
     pub fn execute(&self) {
-        unsafe { bindings::execute_command(self.ptr) };
+        unsafe { bash::execute_command(self.ptr) };
     }
 }
 
 impl Drop for Command {
     fn drop(&mut self) {
-        unsafe { bindings::dispose_command(self.ptr) };
+        unsafe { bash::dispose_command(self.ptr) };
     }
 }
 
@@ -30,22 +30,22 @@ impl FromStr for Command {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let cmd_str = CString::new(s).unwrap().into_raw();
         let name_ptr = CString::new("from_str").unwrap().into_raw();
-        let cmd_ptr: *mut bindings::Command;
+        let cmd_ptr: *mut bash::Command;
 
         unsafe {
-            bindings::with_input_from_string(cmd_str, name_ptr);
-            cmd_ptr = match bindings::parse_command() {
-                0 => bindings::copy_command(bindings::GLOBAL_COMMAND),
+            bash::with_input_from_string(cmd_str, name_ptr);
+            cmd_ptr = match bash::parse_command() {
+                0 => bash::copy_command(bash::GLOBAL_COMMAND),
                 _ => return Err(Error::new(format!("failed parsing: {}", s))),
             };
 
             // clean up global command
-            bindings::dispose_command(bindings::GLOBAL_COMMAND);
-            bindings::GLOBAL_COMMAND = ptr::null_mut();
+            bash::dispose_command(bash::GLOBAL_COMMAND);
+            bash::GLOBAL_COMMAND = ptr::null_mut();
 
             // restore parser input source
-            if bindings::STARTUP_STATE == 1 {
-                bindings::with_input_from_stdin();
+            if bash::STARTUP_STATE == 1 {
+                bash::with_input_from_stdin();
             }
         }
 
