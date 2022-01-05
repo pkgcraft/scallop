@@ -11,17 +11,19 @@ static LONG_DOC: &str = "Profile a given function or command.";
 
 #[doc = stringify!(LONG_DOC)]
 pub(crate) fn run(args: &[&str]) -> Result<i32> {
-    let cmd_str = args.join(" ");
-    let cmd = Command::new(&cmd_str)?;
+    let orig_cmd = args.join(" ");
+    // force success so the shell doesn't exit prematurely while profiling
+    let cmd_str = format!("{} || return 0", orig_cmd);
+    let cmd = Command::new(cmd_str, None)?;
 
     let timeout = Arc::new(AtomicBool::new(false));
     let timeout2 = Arc::clone(&timeout);
     let mut loops = 0;
 
-    eprintln!("profiling: {}", cmd_str);
+    eprintln!("profiling: {}", orig_cmd);
 
     thread::spawn(move || {
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(3));
         timeout2.store(true, Ordering::Relaxed);
     });
 

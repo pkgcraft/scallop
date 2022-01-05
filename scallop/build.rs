@@ -55,6 +55,7 @@ fn main() {
         .allowlist_type("word_list")
         .allowlist_var("global_command")
         .allowlist_function("copy_command")
+        .allowlist_var("CMD_.*")
         // execute_command.h
         .allowlist_var("this_command_name")
         .allowlist_function("execute_command")
