@@ -10,8 +10,6 @@ pub struct Command {
     ptr: *mut bash::Command,
 }
 
-unsafe impl Send for Command {}
-
 impl Command {
     #[inline]
     pub fn new<S: AsRef<str>>(s: S) -> crate::Result<Self> {
