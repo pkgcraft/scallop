@@ -43,7 +43,7 @@ impl FromStr for Command {
             bash::dispose_command(bash::GLOBAL_COMMAND);
             bash::GLOBAL_COMMAND = ptr::null_mut();
 
-            // restore parser input source
+            // restore parser input source for interactive sessions
             if bash::STARTUP_STATE == 1 {
                 bash::with_input_from_stdin();
             }
