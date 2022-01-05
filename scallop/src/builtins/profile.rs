@@ -13,7 +13,7 @@ static LONG_DOC: &str = "Profile a given function or command.";
 pub(crate) fn run(args: &[&str]) -> Result<i32> {
     let orig_cmd = args.join(" ");
     // force success so the shell doesn't exit prematurely while profiling
-    let cmd_str = format!("{} || return 0", orig_cmd);
+    let cmd_str = format!("{} || :", orig_cmd);
     let cmd = Command::new(cmd_str, None)?;
 
     let timeout = Arc::new(AtomicBool::new(false));
