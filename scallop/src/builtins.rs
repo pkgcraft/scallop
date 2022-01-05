@@ -117,7 +117,7 @@ pub(crate) unsafe extern "C" fn run(list: *mut bindings::WordList) -> c_int {
     // find its matching rust function and execute it
     let builtin = BUILTINS
         .get(cmd)
-        .expect(&format!("unknown builtin: {}", cmd));
+        .unwrap_or_else(|| panic!("unknown builtin: {}", cmd));
     let args = unsafe { list.into_vec().unwrap() };
 
     match builtin.run(args.as_slice()) {

@@ -5,6 +5,7 @@ use std::ffi::{CStr, CString};
 
 pub mod bindings;
 pub mod builtins;
+pub mod command;
 pub mod error;
 pub mod traits;
 
@@ -13,7 +14,7 @@ pub use self::error::{Error, Result};
 /// Get the currently running command name if one exists.
 #[inline]
 pub fn current_command<'a>() -> Option<&'a str> {
-    let cmd_ptr = unsafe { bindings::this_command_name };
+    let cmd_ptr = unsafe { bindings::CURRENT_COMMAND };
     match cmd_ptr.is_null() {
         true => None,
         false => {

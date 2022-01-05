@@ -6,3 +6,6 @@
 #include "bash/execute_cmd.h"
 #include "bash/variables.h"
 #include "bash/shell.h"
+#include "bash/externs.h"
+#include "bash/input.h"
+#include "bash/dispose_cmd.h"

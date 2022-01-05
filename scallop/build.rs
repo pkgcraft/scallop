@@ -11,10 +11,16 @@ struct BashCallback;
 impl ParseCallbacks for BashCallback {
     fn item_name(&self, original_item_name: &str) -> Option<String> {
         match original_item_name {
+            // structs
             "word_desc" => Some("WordDesc".into()),
             "WORD_DESC" => Some("WordDesc".into()),
             "word_list" => Some("WordList".into()),
             "WORD_LIST" => Some("WordList".into()),
+            "command" => Some("Command".into()),
+            // global mutables
+            "global_command" => Some("GLOBAL_COMMAND".into()),
+            "this_command_name" => Some("CURRENT_COMMAND".into()),
+            "startup_state" => Some("STARTUP_STATE".into()),
             _ => None,
         }
     }
@@ -48,12 +54,23 @@ fn main() {
         // command.h
         .allowlist_type("word_desc")
         .allowlist_type("word_list")
+        .allowlist_var("global_command")
+        .allowlist_function("copy_command")
         // execute_command.h
         .allowlist_var("this_command_name")
+        .allowlist_function("execute_command")
         // shell.h
         .allowlist_function("bash_main")
+        .allowlist_var("startup_state")
         // variables.h
         .allowlist_function("get_string_value")
+        // externs.h
+        .allowlist_function("parse_command")
+        // input.h
+        .allowlist_function("with_input_from_string")
+        .allowlist_function("with_input_from_stdin")
+        // dispose_cmd.h
+        .allowlist_function("dispose_command")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values

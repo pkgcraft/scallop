@@ -1,6 +1,17 @@
 use std::os::raw::{c_char, c_int};
 
-include!(concat!(env!("OUT_DIR"), "/bash-bindings.rs"));
+mod internal {
+    #![allow(non_camel_case_types)]
+    #![allow(non_upper_case_globals)]
+    #![allow(non_snake_case)]
+    #![allow(dead_code)]
+    #![allow(unreachable_pub)]
+    #![allow(clippy::all)]
+    include!(concat!(env!("OUT_DIR"), "/bash-bindings.rs"));
+}
+
+pub use internal::bash_main;
+pub(crate) use internal::*;
 
 type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
 
