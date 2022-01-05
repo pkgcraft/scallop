@@ -13,12 +13,19 @@ pub struct Command {
 unsafe impl Send for Command {}
 
 impl Command {
+    #[inline]
+    pub fn new<S: AsRef<str>>(s: S) -> crate::Result<Self> {
+        Command::from_str(s.as_ref())
+    }
+
+    #[inline]
     pub fn execute(&self) {
         unsafe { bash::execute_command(self.ptr) };
     }
 }
 
 impl Drop for Command {
+    #[inline]
     fn drop(&mut self) {
         unsafe { bash::dispose_command(self.ptr) };
     }

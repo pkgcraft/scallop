@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -13,7 +12,7 @@ static LONG_DOC: &str = "Profile a given function or command.";
 #[doc = stringify!(LONG_DOC)]
 pub(crate) fn run(args: &[&str]) -> Result<i32> {
     let cmd_str = args.join(" ");
-    let cmd = Command::from_str(&cmd_str)?;
+    let cmd = Command::new(&cmd_str)?;
 
     let timeout = Arc::new(AtomicBool::new(false));
     let timeout2 = Arc::clone(&timeout);
