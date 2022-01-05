@@ -14,10 +14,10 @@ use crate::{current_command, Result};
 pub mod profile;
 
 // pkgcraft specific builtins
-#[cfg(feature = "pkgcraft")]
+#[cfg(feature = "pkg")]
 pub mod pkg;
 // export pkgcraft builtins
-#[cfg(feature = "pkgcraft")]
+#[cfg(feature = "pkg")]
 pub use pkg::*;
 
 type BuiltinFn = fn(&[&str]) -> Result<i32>;

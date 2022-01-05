@@ -1,7 +1,6 @@
 use std::cmp;
 
-use pkgcraft::bash::{parse, version_split};
-
+use super::{parse, version_split};
 use crate::builtins::Builtin;
 use crate::{string_value, Error, Result};
 

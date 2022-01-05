@@ -15,8 +15,8 @@ autotests = false
 crate-type = ["cdylib"]
 
 [features]
-default = ["pkgcraft"]
-pkgcraft = ["scallop/pkgcraft"]
+default = ["pkg"]
+pkg = ["scallop/pkg"]
 
 [dependencies]
 scallop = { path = "../scallop", version = "0.0.1" }

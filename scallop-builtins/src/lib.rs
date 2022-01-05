@@ -1,3 +1,3 @@
 mod base;
-#[cfg(feature = "pkgcraft")]
-mod pkgcraft;
+#[cfg(feature = "pkg")]
+mod pkg;
