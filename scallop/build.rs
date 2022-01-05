@@ -17,10 +17,11 @@ impl ParseCallbacks for BashCallback {
             "word_list" => Some("WordList".into()),
             "WORD_LIST" => Some("WordList".into()),
             "command" => Some("Command".into()),
+            "BASH_INPUT" => Some("BashInput".into()),
             // global mutables
             "global_command" => Some("GLOBAL_COMMAND".into()),
             "this_command_name" => Some("CURRENT_COMMAND".into()),
-            "startup_state" => Some("STARTUP_STATE".into()),
+            "bash_input" => Some("BASH_INPUT".into()),
             _ => None,
         }
     }
@@ -61,14 +62,14 @@ fn main() {
         .allowlist_function("execute_command")
         // shell.h
         .allowlist_function("bash_main")
-        .allowlist_var("startup_state")
         // variables.h
         .allowlist_function("get_string_value")
         // externs.h
         .allowlist_function("parse_command")
         // input.h
         .allowlist_function("with_input_from_string")
-        .allowlist_function("with_input_from_stdin")
+        .allowlist_type("BASH_INPUT")
+        .allowlist_var("bash_input")
         // dispose_cmd.h
         .allowlist_function("dispose_command")
         // invalidate built crate whenever any included header file changes

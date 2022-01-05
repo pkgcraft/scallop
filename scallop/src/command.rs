@@ -33,6 +33,10 @@ impl FromStr for Command {
         let cmd_ptr: *mut bash::Command;
 
         unsafe {
+            // save original input source
+            let orig_input = bash::BASH_INPUT.clone();
+
+            // parse command from string
             bash::with_input_from_string(cmd_str, name_ptr);
             cmd_ptr = match bash::parse_command() {
                 0 => bash::copy_command(bash::GLOBAL_COMMAND),
@@ -43,10 +47,8 @@ impl FromStr for Command {
             bash::dispose_command(bash::GLOBAL_COMMAND);
             bash::GLOBAL_COMMAND = ptr::null_mut();
 
-            // restore parser input source for interactive sessions
-            if bash::STARTUP_STATE == 1 {
-                bash::with_input_from_stdin();
-            }
+            // restore original input source
+            bash::BASH_INPUT = orig_input;
         }
 
         Ok(Command { ptr: cmd_ptr })
