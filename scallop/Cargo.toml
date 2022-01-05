@@ -27,7 +27,7 @@ pkg = ["pkgcraft", "peg", "regex"]
 [dependencies]
 once_cell = "1.8.0"
 pkgcraft = { path = "../../pkgcraft", version = "0.0.2", optional = true }
-peg = { version = "0.7", optional = true }
+peg = { version = "0.8", optional = true }
 regex = { version = "1", optional = true }
 
 [build-dependencies]
