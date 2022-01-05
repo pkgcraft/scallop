@@ -36,7 +36,7 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
         tx.send((elapsed, loops)).expect("channel transmit error");
     });
 
-    ticks.recv().expect("channel recieve error");
+    ticks.recv().expect("channel receive error");
     timeout2.store(true, Ordering::Relaxed);
     let (elapsed, loops) = rx.recv().unwrap();
     let per_loop = elapsed / loops;
