@@ -1,12 +1,18 @@
+use std::sync::atomic::AtomicBool;
+
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+pub mod die;
 pub mod export_functions;
 pub mod has;
 pub mod hasv;
+pub mod nonfatal;
 pub mod ver_cut;
 pub mod ver_rs;
 pub mod ver_test;
+
+static NONFATAL: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 
 static VERSION_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?P<sep>[[:^alnum:]]+)?(?P<comp>[[:digit:]]+|[[:alpha:]]+)?").unwrap()

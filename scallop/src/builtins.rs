@@ -93,7 +93,9 @@ static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
     let mut builtins: Vec<&Builtin> = vec![&profile::BUILTIN];
     if cfg!(feature = "pkgcraft") {
         builtins.extend([
+            &pkg::die::BUILTIN,
             &pkg::export_functions::BUILTIN,
+            &pkg::nonfatal::BUILTIN,
             &pkg::has::BUILTIN,
             &pkg::hasv::BUILTIN,
             &pkg::ver_cut::BUILTIN,
