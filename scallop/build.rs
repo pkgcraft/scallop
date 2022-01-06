@@ -71,6 +71,9 @@ fn main() {
         .allowlist_function("pop_stream")
         // dispose_cmd.h
         .allowlist_function("dispose_command")
+        // builtins/common.h
+        .allowlist_function("evalstring")
+        .allowlist_var("SEVAL_.*")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values

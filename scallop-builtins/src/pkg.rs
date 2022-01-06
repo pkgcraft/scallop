@@ -1,6 +1,8 @@
 use scallop::bash;
 use scallop::builtins::*;
 
+#[export_name = "EXPORT_FUNCTIONS_struct"]
+static mut EXPORT_FUNCTIONS_STRUCT: Option<bash::Builtin> = None;
 #[export_name = "has_struct"]
 static mut HAS_STRUCT: Option<bash::Builtin> = None;
 #[export_name = "hasv_struct"]
@@ -25,6 +27,7 @@ static INITIALIZE_PKG_BUILTINS: extern "C" fn() = initialize_pkg_builtins;
 #[no_mangle]
 extern "C" fn initialize_pkg_builtins() {
     unsafe {
+        EXPORT_FUNCTIONS_STRUCT = Some(export_functions::BUILTIN.into());
         HAS_STRUCT = Some(has::BUILTIN.into());
         HASV_STRUCT = Some(hasv::BUILTIN.into());
         VER_CUT_STRUCT = Some(ver_cut::BUILTIN.into());

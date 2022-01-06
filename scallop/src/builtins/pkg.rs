@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+pub mod export_functions;
 pub mod has;
 pub mod hasv;
 pub mod ver_cut;
