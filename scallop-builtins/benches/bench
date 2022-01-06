@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+if [[ -f target/release/libscallop_builtins.so ]]; then
+	LIBRARY=target/release/libscallop_builtins.so
+elif [[ -f target/debug/libscallop_builtins.so ]]; then
+	LIBRARY=target/debug/libscallop_builtins.so
+else
+	echo builtins library not available
+	exit 1
+fi
+
+enable -f ${LIBRARY} profile has hasv ver_cut ver_rs ver_test
+
+echo rust implementations
+profile has 9 1 2 3 4 5 6 7 8 9
+profile hasv 9 1 2 3 4 5 6 7 8 9 >/dev/null
+profile ver_test 1.2.3 -lt 1.2.3_p
+profile ver_cut 2-4 1.2.3.4.5 >/dev/null
+profile ver_rs 2-4 1.2.3.4.5 >/dev/null
+
+echo
+echo bash implementations
+source $(dirname ${BASH_SOURCE[0]})/pkgcore.bash
+profile ver_test 1.2.3 -lt 1.2.3_p
+profile ver_cut 2-4 1.2.3.4.5 >/dev/null
+profile ver_rs 2-4 1.2.3.4.5 >/dev/null
