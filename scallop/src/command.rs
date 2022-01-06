@@ -2,6 +2,8 @@ use std::ffi::CString;
 use std::ptr;
 use std::str::FromStr;
 
+use once_cell::sync::Lazy;
+
 use crate::bash;
 use crate::Error;
 
@@ -33,12 +35,15 @@ impl Drop for Command {
     }
 }
 
+static COMMAND_MARKER: Lazy<CString> = Lazy::new(|| CString::new("Command::from_str").unwrap());
+
 impl FromStr for Command {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let cmd_ptr = CString::new(s).unwrap().into_raw();
-        let name_ptr = CString::new("from_str").unwrap().into_raw();
+        let cmd_str = CString::new(s).unwrap();
+        let cmd_ptr = cmd_str.as_ptr() as *mut _;
+        let name_ptr = COMMAND_MARKER.as_ptr();
         let cmd: *mut bash::Command;
 
         unsafe {
@@ -51,10 +56,6 @@ impl FromStr for Command {
                 0 => bash::copy_command(bash::GLOBAL_COMMAND),
                 _ => return Err(Error::new(format!("failed parsing: {}", s))),
             };
-
-            // deallocate strings
-            drop(CString::from_raw(cmd_ptr));
-            drop(CString::from_raw(name_ptr));
 
             // clean up global command
             bash::dispose_command(bash::GLOBAL_COMMAND);
