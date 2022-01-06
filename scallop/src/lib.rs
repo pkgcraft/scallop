@@ -9,6 +9,7 @@ pub mod command;
 pub mod error;
 pub mod source;
 pub mod traits;
+pub mod variables;
 
 pub use self::error::{Error, Result};
 

@@ -63,6 +63,8 @@ fn main() {
         .allowlist_function("bash_main")
         // variables.h
         .allowlist_function("get_string_value")
+        .allowlist_function("bind_variable")
+        .allowlist_function("unbind_variable")
         // externs.h
         .allowlist_function("parse_command")
         // input.h
@@ -74,6 +76,8 @@ fn main() {
         // builtins/common.h
         .allowlist_function("evalstring")
         .allowlist_var("SEVAL_.*")
+        // subst.h
+        .allowlist_var("ASS_.*")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values
