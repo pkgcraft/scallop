@@ -1,7 +1,5 @@
-use std::ffi::CString;
-
 use crate::builtins::Builtin;
-use crate::{bash, string_value, Error, Result};
+use crate::{source, string_value, Error, Result};
 
 static LONG_DOC: &str = "\
 Export stub functions that call the eclass's functions, thereby making them default.
@@ -17,20 +15,18 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
         None => return Err(Error::new("no ECLASS defined")),
     };
 
-    let file_ptr = CString::new("EXPORT_FUNCTIONS").unwrap().into_raw();
-    for func in args {
-        let func_str = format!(
-            "{func}() {{ {eclass}_{func} \"$@\"; }}",
-            func = func,
-            eclass = eclass
-        );
-        unsafe {
-            let func_ptr = CString::new(func_str).unwrap().into_raw();
-            bash::evalstring(func_ptr, file_ptr, bash::SEVAL_NOFREE as i32);
-            drop(CString::from_raw(func_ptr));
-        }
-    }
-    unsafe { drop(CString::from_raw(file_ptr)) };
+    let funcs: Vec<String> = args
+        .iter()
+        .map(|func| {
+            format!(
+                "{func}() {{ {eclass}_{func} \"$@\"; }}",
+                func = func,
+                eclass = eclass
+            )
+        })
+        .collect();
+
+    source::string(funcs.join("\n"))?;
 
     Ok(0)
 }
