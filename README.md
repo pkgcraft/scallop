@@ -34,9 +34,6 @@ See the following example using the **profile** and **ver_test** builtins.
 # if not installed, tell the linker where to find the scallop library
 export LD_LIBRARY_PATH=$PWD/build
 
-# load builtins
-enable -f target/debug/libscallop_builtins.so profile ver_test
-
 # use the profile builtin to benchmark the ver_test builtin
-profile ver_test 1.2.3 -lt 1.2.3_p
+bash -c "enable -f target/debug/libscallop_builtins.so profile ver_test && profile ver_test 1.2.3 -lt 1.2.3_p"
 ```
