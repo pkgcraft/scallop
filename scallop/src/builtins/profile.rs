@@ -29,7 +29,7 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
 
     let start = SystemTime::now();
     while !timeout.load(Ordering::Relaxed) {
-        cmd.execute();
+        cmd.execute().ok();
         loops += 1;
     }
     let elapsed = start.elapsed().expect("failed getting elapsed time");

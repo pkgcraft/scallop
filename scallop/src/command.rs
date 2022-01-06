@@ -13,7 +13,6 @@ pub struct Command {
 }
 
 impl Command {
-    #[inline]
     pub fn new<S: AsRef<str>>(s: S, flags: Option<i32>) -> crate::Result<Self> {
         let cmd = Command::from_str(s.as_ref())?;
         if let Some(flags) = flags {
@@ -22,9 +21,11 @@ impl Command {
         Ok(cmd)
     }
 
-    #[inline]
-    pub fn execute(&self) {
-        unsafe { bash::execute_command(self.ptr) };
+    pub fn execute(&self) -> crate::Result<i32> {
+        match unsafe { bash::execute_command(self.ptr) } {
+            0 => Ok(0),
+            n => Err(Error::new(format!("command failed: {}", n))),
+        }
     }
 }
 
