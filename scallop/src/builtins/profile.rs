@@ -47,4 +47,5 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "profile func arg1 arg2",
+    exit_on_error: false,
 };

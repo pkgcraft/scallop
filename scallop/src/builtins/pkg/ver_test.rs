@@ -42,4 +42,5 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "ver_test 1 -lt 2-r1",
+    exit_on_error: false,
 };

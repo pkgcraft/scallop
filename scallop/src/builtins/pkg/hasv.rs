@@ -19,4 +19,5 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "hasv needle ${haystack}",
+    exit_on_error: false,
 };

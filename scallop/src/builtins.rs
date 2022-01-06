@@ -28,6 +28,7 @@ pub struct Builtin {
     pub func: BuiltinFn,
     pub help: &'static str,
     pub usage: &'static str,
+    pub exit_on_error: bool,
 }
 
 impl fmt::Debug for Builtin {
@@ -124,7 +125,11 @@ unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
         Ok(ret) => ret,
         Err(e) => {
             eprintln!("{}: error: {}", cmd, e);
-            -1
+            match builtin.exit_on_error {
+                false => -1,
+                // TODO: this should probably call the exit builtin
+                true => std::process::exit(1),
+            }
         }
     }
 }

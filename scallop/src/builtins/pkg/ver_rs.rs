@@ -52,4 +52,5 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "ver_rs 2 - 1.2.3",
+    exit_on_error: false,
 };
