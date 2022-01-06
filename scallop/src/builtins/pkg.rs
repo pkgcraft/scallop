@@ -3,6 +3,7 @@ use std::sync::atomic::AtomicBool;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+pub mod assert;
 pub mod die;
 pub mod export_functions;
 pub mod has;

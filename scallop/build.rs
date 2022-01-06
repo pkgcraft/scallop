@@ -16,6 +16,8 @@ impl ParseCallbacks for BashCallback {
             "WORD_DESC" => Some("WordDesc".into()),
             "word_list" => Some("WordList".into()),
             "WORD_LIST" => Some("WordList".into()),
+            "SHELL_VAR" => Some("ShellVar".into()),
+            "ARRAY" => Some("Array".into()),
             "command" => Some("Command".into()),
             // global mutables
             "global_command" => Some("GLOBAL_COMMAND".into()),
@@ -65,6 +67,8 @@ fn main() {
         .allowlist_function("get_string_value")
         .allowlist_function("bind_variable")
         .allowlist_function("unbind_variable")
+        .allowlist_function("find_variable")
+        .allowlist_var("att_.*") // variable attributes
         // externs.h
         .allowlist_function("parse_command")
         // input.h
@@ -78,6 +82,8 @@ fn main() {
         .allowlist_var("SEVAL_.*")
         // subst.h
         .allowlist_var("ASS_.*")
+        // array.h
+        .allowlist_function("array_to_argv")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values

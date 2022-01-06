@@ -1,6 +1,8 @@
 use scallop::bash;
 use scallop::builtins::*;
 
+#[export_name = "assert_struct"]
+static mut ASSERT_STRUCT: Option<bash::Builtin> = None;
 #[export_name = "die_struct"]
 static mut DIE_STRUCT: Option<bash::Builtin> = None;
 #[export_name = "EXPORT_FUNCTIONS_struct"]
@@ -31,6 +33,7 @@ static INITIALIZE_PKG_BUILTINS: extern "C" fn() = initialize_pkg_builtins;
 #[no_mangle]
 extern "C" fn initialize_pkg_builtins() {
     unsafe {
+        ASSERT_STRUCT = Some(assert::BUILTIN.into());
         DIE_STRUCT = Some(die::BUILTIN.into());
         EXPORT_FUNCTIONS_STRUCT = Some(export_functions::BUILTIN.into());
         NONFATAL_STRUCT = Some(nonfatal::BUILTIN.into());
