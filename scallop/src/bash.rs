@@ -21,11 +21,12 @@ type BuiltinFnPtr = unsafe extern "C" fn(list: *mut WordList) -> c_int;
 //
 // Related upstream issue: https://github.com/rust-lang/rust-bindgen/issues/1278
 #[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct Builtin {
     pub name: *const c_char,
     pub function: BuiltinFnPtr,
     pub flags: c_int,
-    pub long_doc: *const *const c_char,
+    pub long_doc: *const *mut c_char,
     pub short_doc: *const c_char,
     pub handle: *mut c_char,
 }

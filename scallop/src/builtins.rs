@@ -69,16 +69,13 @@ impl From<Builtin> for bash::Builtin {
         let short_doc = short_doc_str.as_ptr();
         mem::forget(short_doc_str);
 
-        let long_doc_str: Vec<CString> = builtin
+        let mut long_doc_ptr: Vec<*mut c_char> = builtin
             .help
             .split('\n')
-            .map(|s| CString::new(s).unwrap())
+            .map(|s| CString::new(s).unwrap().into_raw())
             .collect();
-        let mut long_doc_ptr: Vec<*const c_char> =
-            long_doc_str.iter().map(|s| s.as_ptr()).collect();
-        long_doc_ptr.push(ptr::null());
+        long_doc_ptr.push(ptr::null_mut());
         let long_doc = long_doc_ptr.as_ptr();
-        mem::forget(long_doc_str);
         mem::forget(long_doc_ptr);
 
         bash::Builtin {
