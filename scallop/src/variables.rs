@@ -1,7 +1,27 @@
 use std::ffi::{CStr, CString};
 use std::slice;
 
+use bitflags::bitflags;
+
 use crate::{bash, Error, Result};
+
+bitflags! {
+    /// Flags for various attributes a given variable can have.
+    struct Attr: u32 {
+        const EXPORTED = bash::att_exported;
+        const READONLY = bash::att_readonly;
+        const ARRAY = bash::att_array;
+        const FUNCTION = bash::att_function;
+        const INTEGER = bash::att_integer;
+        const LOCAL = bash::att_local;
+        const ASSOC = bash::att_assoc;
+        const TRACE = bash::att_trace;
+        const UPPERCASE = bash::att_uppercase;
+        const LOWERCASE = bash::att_lowercase;
+        const CAPCASE = bash::att_capcase;
+        const NAMEREF = bash::att_nameref;
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Variable {
@@ -44,7 +64,7 @@ pub fn array_to_vec(name: &str) -> Result<Vec<&str>> {
     let var = unsafe { bash::find_variable(var_name.as_ptr()).as_ref() };
     let array_ptr = match var {
         None => return Err(Error::new(format!("undefined variable: {}", name))),
-        Some(v) => match (v.attributes as u32 & bash::att_array) != 0 {
+        Some(v) => match (v.attributes as u32 & Attr::ARRAY.bits()) != 0 {
             true => v.value as *mut bash::Array,
             false => return Err(Error::new(format!("variable is not an array: {}", name))),
         },

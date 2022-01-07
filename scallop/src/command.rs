@@ -2,10 +2,24 @@ use std::ffi::CString;
 use std::ptr;
 use std::str::FromStr;
 
+use bitflags::bitflags;
 use once_cell::sync::Lazy;
 
 use crate::bash;
 use crate::Error;
+
+bitflags! {
+    /// Flag values used with commands.
+    struct Flags: u32 {
+        const WANT_SUBSHELL = bash::CMD_WANT_SUBSHELL;
+        const FORCE_SUBSHELL = bash::CMD_FORCE_SUBSHELL;
+        const INVERT_RETURN = bash::CMD_INVERT_RETURN;
+        const IGNORE_RETURN = bash::CMD_IGNORE_RETURN;
+        const NO_FUNCTIONS = bash::CMD_NO_FUNCTIONS;
+        const INHIBIT_EXPANSION = bash::CMD_INHIBIT_EXPANSION;
+        const NO_FORK = bash::CMD_NO_FORK;
+    }
+}
 
 #[derive(Debug)]
 pub struct Command {
