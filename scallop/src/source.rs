@@ -1,4 +1,5 @@
 use std::ffi::CString;
+use std::path::Path;
 
 use bitflags::bitflags;
 use once_cell::sync::Lazy;
@@ -6,7 +7,7 @@ use once_cell::sync::Lazy;
 use crate::{bash, Error, Result};
 
 bitflags! {
-    /// Flag values used with parse_and_execute() and related commands.
+    /// Flag values used with source::string() for altering string evaluation.
     struct Eval: u32 {
         const NON_INTERACTIVE = bash::SEVAL_NONINT;
         const INTERACTIVE = bash::SEVAL_INTERACT;
@@ -21,7 +22,7 @@ bitflags! {
     }
 }
 
-static FILE_STR: Lazy<CString> = Lazy::new(|| CString::new("source::string").unwrap());
+static FILE_STR: Lazy<CString> = Lazy::new(|| CString::new("scallop::source::string").unwrap());
 
 pub fn string<S: AsRef<str>>(s: S) -> Result<i32> {
     let ret: i32;
@@ -37,5 +38,21 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<i32> {
     match ret {
         0 => Ok(0),
         _ => return Err(Error::new(format!("failed sourcing string: {}", s))),
+    }
+}
+
+pub fn file<P: AsRef<Path>>(path: &P) -> Result<i32> {
+    let ret: i32;
+    let path = path.as_ref();
+    let c_str = CString::new(path.to_str().unwrap()).unwrap();
+    let str_ptr = c_str.as_ptr();
+
+    unsafe {
+        ret = bash::source_file(str_ptr, 0);
+    }
+
+    match ret {
+        0 => Ok(0),
+        _ => return Err(Error::new(format!("failed sourcing file: {:?}", path))),
     }
 }

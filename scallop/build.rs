@@ -79,6 +79,7 @@ fn main() {
         .allowlist_function("dispose_command")
         // builtins/common.h
         .allowlist_function("evalstring")
+        .allowlist_function("source_file")
         .allowlist_var("SEVAL_.*")
         // subst.h
         .allowlist_var("ASS_.*")
