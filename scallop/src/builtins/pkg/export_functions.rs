@@ -1,5 +1,6 @@
 use crate::builtins::Builtin;
-use crate::{source, string_value, Error, Result};
+use crate::variables::string_value;
+use crate::{source, Error, Result};
 
 static LONG_DOC: &str = "\
 Export stub functions that call the eclass's functions, thereby making them default.

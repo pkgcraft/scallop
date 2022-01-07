@@ -1,6 +1,7 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
+use std::slice;
 
-use crate::{bash, Result};
+use crate::{bash, Error, Result};
 
 #[derive(Debug, Clone)]
 pub struct Variable {
@@ -26,4 +27,39 @@ impl Variable {
         unsafe { ret = bash::unbind_variable(name.as_ptr()) };
         Ok(ret)
     }
+}
+
+/// Get the string value of a given variable name.
+pub fn string_value(name: &str) -> Option<&str> {
+    let name = CString::new(name).unwrap();
+    match unsafe { bash::get_string_value(name.as_ptr()) } {
+        s if s.is_null() => None,
+        s => Some(unsafe { CStr::from_ptr(s).to_str().unwrap() }),
+    }
+}
+
+/// Get the value of an array for a given variable name.
+pub fn array_to_vec(name: &str) -> Result<Vec<&str>> {
+    let var_name = CString::new(name).unwrap();
+    let var = unsafe { bash::find_variable(var_name.as_ptr()).as_ref() };
+    let array_ptr = match var {
+        None => return Err(Error::new(format!("undefined variable: {}", name))),
+        Some(v) => match (v.attributes as u32 & bash::att_array) != 0 {
+            true => v.value as *mut bash::Array,
+            false => return Err(Error::new(format!("variable is not an array: {}", name))),
+        },
+    };
+
+    let mut count: i32 = 0;
+    let strings: Vec<&str>;
+
+    unsafe {
+        let str_array = bash::array_to_argv(array_ptr, &mut count);
+        strings = slice::from_raw_parts(str_array, count as usize)
+            .iter()
+            .map(|s| CStr::from_ptr(*s).to_str().unwrap())
+            .collect();
+    }
+
+    Ok(strings)
 }

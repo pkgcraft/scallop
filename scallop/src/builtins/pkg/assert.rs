@@ -1,6 +1,7 @@
 use super::die;
 use crate::builtins::Builtin;
-use crate::{array_to_vec, Result};
+use crate::variables::array_to_vec;
+use crate::Result;
 
 static LONG_DOC: &str = "\
 Checks the value of the shell’s pipe status variable, and if any component is non-zero

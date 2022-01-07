@@ -2,7 +2,8 @@ use std::cmp;
 
 use super::{parse, version_split};
 use crate::builtins::Builtin;
-use crate::{string_value, Error, Result};
+use crate::variables::string_value;
+use crate::{Error, Result};
 
 static LONG_DOC: &str = "\
 Output substring from package version string and range arguments.

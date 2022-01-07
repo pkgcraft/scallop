@@ -3,7 +3,8 @@ use std::str::FromStr;
 use pkgcraft::atom::Version;
 
 use crate::builtins::Builtin;
-use crate::{string_value, Error, Result};
+use crate::variables::string_value;
+use crate::{Error, Result};
 
 static LONG_DOC: &str = "\
 Perform version testing as defined in the spec.
