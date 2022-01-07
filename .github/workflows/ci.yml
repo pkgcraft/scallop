@@ -42,7 +42,6 @@ jobs:
           ~/.cargo/registry/cache
           ~/.cargo/git/db
           ~/.rustup
-          bash
           target
         key: v3-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
         restore-keys: v3-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
@@ -68,18 +67,8 @@ jobs:
         echo "CC=clang" >> $GITHUB_ENV
         echo "CFLAGS=-arch x86_64" >> $GITHUB_ENV
 
-    - name: Build bash
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: ./scripts/build-libbash -j2 -- --disable-nls
-
-    - name: Build and install C library
-      run: |
-        meson setup build
-        meson compile -C build -v
-        sudo env "PATH=$PATH" meson install -C build
-
     - name: Build rust projects
-      run: cargo build
+      run: cargo build --features nonls,static -vv
 
     - name: Test rust projects
-      run: cargo test
+      run: cargo test --features nonls,static -vv

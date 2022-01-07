@@ -5,7 +5,11 @@ project(
   meson_version : '>= 0.58.0',
 )
 
-bash_libdir = join_paths(meson.project_source_root(), 'bash')
+bash_libdir = get_option('bash_libdir')
+if bash_libdir == ''
+  bash_libdir = join_paths(meson.project_source_root(), 'bash')
+endif
+
 bash_includes = include_directories([
   '.', 'bash', join_paths('bash', 'include'), join_paths('bash', 'builtins')])
 
