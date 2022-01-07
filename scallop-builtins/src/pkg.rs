@@ -1,5 +1,5 @@
+use pkgcraft::scallop::builtins::*;
 use scallop::bash;
-use scallop::builtins::*;
 
 #[export_name = "assert_struct"]
 static mut ASSERT_STRUCT: Option<bash::Builtin> = None;

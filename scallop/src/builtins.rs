@@ -13,13 +13,6 @@ use crate::{current_command, Result};
 
 pub mod profile;
 
-// pkgcraft specific builtins
-#[cfg(feature = "pkg")]
-pub mod pkg;
-// export pkgcraft builtins
-#[cfg(feature = "pkg")]
-pub use pkg::*;
-
 type BuiltinFn = fn(&[&str]) -> Result<i32>;
 
 #[derive(Clone, Copy)]
@@ -89,24 +82,8 @@ impl From<Builtin> for bash::Builtin {
     }
 }
 
-static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> = Lazy::new(|| {
-    let mut builtins: Vec<&Builtin> = vec![&profile::BUILTIN];
-    if cfg!(feature = "pkgcraft") {
-        builtins.extend([
-            &pkg::assert::BUILTIN,
-            &pkg::die::BUILTIN,
-            &pkg::export_functions::BUILTIN,
-            &pkg::nonfatal::BUILTIN,
-            &pkg::has::BUILTIN,
-            &pkg::hasv::BUILTIN,
-            &pkg::ver_cut::BUILTIN,
-            &pkg::ver_rs::BUILTIN,
-            &pkg::ver_test::BUILTIN,
-        ]);
-    }
-
-    builtins.iter().map(|&b| (b.name, b)).collect()
-});
+static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> =
+    Lazy::new(|| [&profile::BUILTIN].iter().map(|&b| (b.name, b)).collect());
 
 /// Builtin function wrapper converting between rust and C types.
 ///

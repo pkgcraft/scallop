@@ -16,7 +16,8 @@ crate-type = ["cdylib"]
 
 [features]
 default = ["pkg"]
-pkg = ["scallop/pkg"]
+pkg = ["pkgcraft"]
 
 [dependencies]
 scallop = { path = "../scallop", version = "0.0.1" }
+pkgcraft = { path = "../../pkgcraft", version = "0.0.2", optional = true }
