@@ -43,8 +43,8 @@ jobs:
           ~/.cargo/git/db
           ~/.rustup
           target
-        key: v3-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
-        restore-keys: v3-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
+        key: v4-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
+        restore-keys: v4-${{ github.job }}-${{ runner.os }}-rust-${{ matrix.rust-version }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
 
     - name: Set up rust toolchain ${{ matrix.rust-version }}
       uses: actions-rs/toolchain@v1

@@ -35,10 +35,10 @@ fn main() {
     let bash_path = repo_path.join("bash");
     let bash_dir = bash_path.to_str().unwrap();
     let out_dir = env::var("OUT_DIR").unwrap();
-    let target_dir_path = fs::canonicalize(format!("{}/../../", out_dir)).unwrap();
+    let target_dir_path = fs::canonicalize(format!("{}/../../../", out_dir)).unwrap();
     let target_dir = target_dir_path.to_str().unwrap();
-    let bash_out_dir = format!("{}/bash", target_dir);
-    let bash_build_dir = format!("{}/build", bash_out_dir);
+    let bash_out_dir = &format!("{}/bash", target_dir);
+    let bash_build_dir = &format!("{}/build", bash_out_dir);
     fs::create_dir_all(&bash_out_dir).unwrap();
 
     // TODO: Use the cc crate with some stub code to try compiling to see if the required dynamic
@@ -46,7 +46,7 @@ fn main() {
 
     // build bash library if it doesn't exist
     let mut bash = autotools::Config::new(&bash_path);
-    if !Path::new(&format!("{}/libbash.a", &bash_build_dir)).exists() {
+    if !Path::new(&format!("{}/libbash.a", bash_build_dir)).exists() {
         bash.forbid("--disable-shared")
             .forbid("--enable-static")
             .enable("library", None)
@@ -71,17 +71,17 @@ fn main() {
 
     if cfg!(feature = "static") {
         // link with scallop lib
-        println!("cargo:rustc-link-search=native={}", &bash_build_dir);
+        println!("cargo:rustc-link-search=native={}", bash_build_dir);
         println!("cargo:rustc-link-lib=static=bash");
     } else {
-        let meson_build_dir = &format!("{}/meson", out_dir);
+        let meson_build_dir = &format!("{}/meson", target_dir);
         if !Path::new(&format!("{}/libscallop.so", meson_build_dir)).exists() {
             Command::new("meson")
                 .args([
                     "setup",
                     meson_build_dir,
                     repo_dir,
-                    &format!("-Dbash_libdir={}", &bash_build_dir),
+                    &format!("-Dbash_libdir={}", bash_build_dir),
                 ])
                 .stdout(Stdio::inherit())
                 .output()
