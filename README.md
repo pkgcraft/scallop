@@ -6,8 +6,9 @@ writing bash builtins natively in rust and running them in either standard bash
 
 ## Development
 
-Developing scallop requires recent versions of cargo, rust, meson, and ninja
-are installed along with a standard C compiler.
+Developing scallop requires recent versions of cargo and rust are installed
+along with a standard C compiler. Additionally, meson and ninja are required
+for shared library support.
 
 To build scallop, run the following commands:
 

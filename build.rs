@@ -31,7 +31,7 @@ impl ParseCallbacks for BashCallback {
 }
 
 fn main() {
-    let repo_path = fs::canonicalize(format!("{}/../", env!("CARGO_MANIFEST_DIR"))).unwrap();
+    let repo_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     let repo_dir = repo_path.to_str().unwrap();
     let bash_path = repo_path.join("bash");
     let bash_dir = bash_path.to_str().unwrap();

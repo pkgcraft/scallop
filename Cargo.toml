@@ -1,5 +1,34 @@
-[workspace]
-members = [
-	"scallop",
-	"scallop-builtins",
-]
+[package]
+name = "scallop"
+version = "0.0.1"
+description = "Wrapper library for bash"
+authors = ["Tim Harder <radhermit@gmail.com>"]
+homepage = "https://github.com/pkgcraft/scallop"
+repository = "https://github.com/pkgcraft/scallop"
+readme = "README.md"
+license = "GPL-3"
+edition = "2021"
+rust-version = "1.56"
+autotests = false
+
+[features]
+shared = []
+nls = []
+
+[lib]
+name = "scallop"
+path = "src/lib.rs"
+
+[[bin]]
+bench = false
+path = "src/main.rs"
+name = "scallop"
+
+[dependencies]
+bitflags = "1.3"
+once_cell = "1.8.0"
+
+[build-dependencies]
+autotools = "0.2.4"
+bindgen = "0.59.2"
+num_cpus = "1.0"
