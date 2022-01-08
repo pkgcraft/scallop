@@ -52,8 +52,8 @@ jobs:
         echo "CC=clang" >> $GITHUB_ENV
         echo "CFLAGS=-arch x86_64" >> $GITHUB_ENV
 
-    - name: Build rust projects
+    - name: Build crate
       run: cargo build -vv
 
-    - name: Test rust projects
+    - name: Test crate
       run: cargo test -vv
