@@ -15,15 +15,6 @@ jobs:
         rust-version: ['1.56.0', '1.57.0']
 
     steps:
-    - name: Checkout pkgcraft
-      uses: actions/checkout@v2
-      with:
-        repository: pkgcraft/pkgcraft
-        path: pkgcraft
-
-    - name: Move pkgcraft into expected location
-      run: mv pkgcraft ../
-
     - name: Checkout code
       uses: actions/checkout@v2
       with:
