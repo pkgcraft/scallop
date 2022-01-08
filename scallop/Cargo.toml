@@ -13,7 +13,7 @@ autotests = false
 
 [features]
 static = []
-nonls = []
+nls = []
 
 [lib]
 name = "scallop"

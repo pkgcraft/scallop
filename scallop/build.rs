@@ -58,7 +58,7 @@ fn main() {
             .disable("mem-scramble", None)
             .disable("net-redirections", None);
 
-        if cfg!(feature = "nonls") {
+        if !cfg!(feature = "nls") {
             bash.disable("nls", None);
         }
 
