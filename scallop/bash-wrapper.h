@@ -9,3 +9,4 @@
 #include "bash/externs.h"
 #include "bash/input.h"
 #include "bash/dispose_cmd.h"
+#include "bash/builtins.h"

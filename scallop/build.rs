@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use autotools;
+use autotools::Config;
 use bindgen::callbacks::ParseCallbacks;
 
 #[derive(Debug)]
@@ -21,6 +21,7 @@ impl ParseCallbacks for BashCallback {
             "SHELL_VAR" => Some("ShellVar".into()),
             "ARRAY" => Some("Array".into()),
             "command" => Some("Command".into()),
+            "builtin" => Some("Builtin".into()),
             // global mutables
             "global_command" => Some("GLOBAL_COMMAND".into()),
             "this_command_name" => Some("CURRENT_COMMAND".into()),
@@ -45,7 +46,7 @@ fn main() {
     // library exists before building our own.
 
     // build bash library if it doesn't exist
-    let mut bash = autotools::Config::new(&bash_path);
+    let mut bash = Config::new(&bash_path);
     if !Path::new(&format!("{}/libbash.a", bash_build_dir)).exists() {
         bash.forbid("--disable-shared")
             .forbid("--enable-static")
@@ -143,11 +144,14 @@ fn main() {
         // builtins/common.h
         .allowlist_function("evalstring")
         .allowlist_function("source_file")
+        .allowlist_function("register_builtins")
         .allowlist_var("SEVAL_.*")
         // subst.h
         .allowlist_var("ASS_.*")
         // array.h
         .allowlist_function("array_to_argv")
+        // builtins.h
+        .blocklist_type("builtin")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values
