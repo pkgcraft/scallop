@@ -5,12 +5,16 @@ use std::time::{Duration, SystemTime};
 
 use crate::builtins::Builtin;
 use crate::command::Command;
-use crate::Result;
+use crate::{Error, Result};
 
 static LONG_DOC: &str = "Profile a given function or command.";
 
 #[doc = stringify!(LONG_DOC)]
 pub(crate) fn run(args: &[&str]) -> Result<i32> {
+    if args.is_empty() {
+        return Err(Error::new("requires 1 or more args, got 0"));
+    }
+
     let orig_cmd = args.join(" ");
     // force success so the shell doesn't exit prematurely while profiling
     let cmd_str = format!("{} || :", orig_cmd);
