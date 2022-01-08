@@ -109,8 +109,8 @@ pub fn register(builtins: Vec<&'static Builtin>) -> Result<i32> {
     Ok(ret)
 }
 
-#[rustfmt::skip]
-static BUILTINS: Lazy<RwLock<HashMap<&'static str, &'static Builtin>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+static BUILTINS: Lazy<RwLock<HashMap<&'static str, &'static Builtin>>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
 
 /// Add builtins to known mapping for run() wrapper to work as expected.
 pub fn update_run_map<I>(builtins: I)
