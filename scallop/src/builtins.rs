@@ -3,6 +3,7 @@ use std::ffi::CString;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_int};
+use std::sync::RwLock;
 use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
@@ -83,14 +84,14 @@ impl From<Builtin> for bash::Builtin {
 }
 
 /// Register builtins into the internal shell list for use.
-pub fn register(builtins: Vec<Builtin>) -> Result<i32> {
+pub fn register(builtins: Vec<&'static Builtin>) -> Result<i32> {
     let ret: i32;
 
     unsafe {
         // convert builtins into pointers
         let mut builtin_ptrs: Vec<*mut bash::Builtin> = builtins
             .iter()
-            .map(|&b| Box::into_raw(Box::new(b.into())))
+            .map(|&b| Box::into_raw(Box::new((*b).into())))
             .collect();
 
         let builtins_len: i32 = builtins.len().try_into().unwrap();
@@ -102,11 +103,23 @@ pub fn register(builtins: Vec<Builtin>) -> Result<i32> {
             .for_each(|&b| mem::drop(Box::from_raw(b)));
     }
 
+    // add builtins to known mapping
+    update_run_map(builtins);
+
     Ok(ret)
 }
 
-static BUILTINS: Lazy<HashMap<&'static str, &'static Builtin>> =
-    Lazy::new(|| [&profile::BUILTIN].iter().map(|&b| (b.name, b)).collect());
+#[rustfmt::skip]
+static BUILTINS: Lazy<RwLock<HashMap<&'static str, &'static Builtin>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+
+/// Add builtins to known mapping for run() wrapper to work as expected.
+pub fn update_run_map<I>(builtins: I)
+where
+    I: IntoIterator<Item = &'static Builtin>,
+{
+    let mut builtin_map = BUILTINS.write().unwrap();
+    builtin_map.extend(builtins.into_iter().map(|b| (b.name, b)));
+}
 
 /// Builtin function wrapper converting between rust and C types.
 ///
@@ -117,7 +130,8 @@ unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
     // get the current running command name
     let cmd = current_command().expect("failed getting current command");
     // find its matching rust function and execute it
-    let builtin = BUILTINS
+    let builtin_map = BUILTINS.read().unwrap();
+    let builtin = builtin_map
         .get(cmd)
         .unwrap_or_else(|| panic!("unknown builtin: {}", cmd));
     let args = unsafe { list.into_vec().unwrap() };
