@@ -70,11 +70,7 @@ fn main() {
             .build();
     }
 
-    if cfg!(feature = "static") {
-        // link with scallop lib
-        println!("cargo:rustc-link-search=native={}", bash_build_dir);
-        println!("cargo:rustc-link-lib=static=bash");
-    } else {
+    if cfg!(feature = "shared") {
         let meson_build_dir = &format!("{}/meson", target_dir);
         if !Path::new(&format!("{}/libscallop.so", meson_build_dir)).exists() {
             Command::new("meson")
@@ -94,12 +90,16 @@ fn main() {
                 .expect("meson compile failed");
         }
 
-        // link with scallop lib
+        // use shared scallop library
         println!("cargo:rustc-link-search=native={}", meson_build_dir);
         println!("cargo:rustc-link-lib=dylib=scallop");
 
         // https://github.com/rust-lang/cargo/issues/4895
         println!("cargo:rustc-env=LD_LIBRARY_PATH={}", meson_build_dir);
+    } else {
+        // link statically with bash
+        println!("cargo:rustc-link-search=native={}", bash_build_dir);
+        println!("cargo:rustc-link-lib=static=bash");
     }
 
     // add bash symbols to scallop's dynamic symbol table

@@ -68,7 +68,7 @@ jobs:
         echo "CFLAGS=-arch x86_64" >> $GITHUB_ENV
 
     - name: Build rust projects
-      run: cargo build --features static -vv
+      run: cargo build -vv
 
     - name: Test rust projects
-      run: cargo test --features static -vv
+      run: cargo test -vv
