@@ -45,12 +45,6 @@ jobs:
         override: true
         components: rustfmt
 
-    - name: Install meson
-      run: sudo pip3 install meson
-
-    - name: Install ninja
-      uses: seanmiddleditch/gha-setup-ninja@master
-
     - name: Various macos set up
       if: matrix.os == 'macos-latest'
       run: |
