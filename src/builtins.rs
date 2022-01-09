@@ -8,7 +8,7 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::bash;
+use crate::{bash, Error};
 use crate::traits::IntoVec;
 use crate::{current_command, Result};
 
@@ -16,6 +16,7 @@ pub mod command_not_found_handle;
 pub mod profile;
 
 type BuiltinFn = fn(&[&str]) -> Result<i32>;
+type BuiltinErrorFn = fn(&str, Error) -> i32;
 
 #[derive(Clone, Copy)]
 pub struct Builtin {
@@ -23,7 +24,7 @@ pub struct Builtin {
     pub func: BuiltinFn,
     pub help: &'static str,
     pub usage: &'static str,
-    pub exit_on_error: bool,
+    pub error_func: Option<BuiltinErrorFn>,
 }
 
 impl fmt::Debug for Builtin {
@@ -122,6 +123,12 @@ where
     builtin_map.extend(builtins.into_iter().map(|b| (b.name, b)));
 }
 
+/// Output the builtin's error string to stderr.
+pub fn output_error_func(cmd: &str, err: Error) -> i32 {
+    eprintln!("{}: error: {}", cmd, err);
+    -1
+}
+
 /// Builtin function wrapper converting between rust and C types.
 ///
 /// # Safety
@@ -140,11 +147,9 @@ unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
     match builtin.run(args.as_slice()) {
         Ok(ret) => ret,
         Err(e) => {
-            eprintln!("{}: error: {}", cmd, e);
-            match builtin.exit_on_error {
-                false => -1,
-                // TODO: this should probably call the exit builtin
-                true => std::process::exit(1),
+            match builtin.error_func {
+                Some(func) => func(cmd, e),
+                None => -1,
             }
         }
     }

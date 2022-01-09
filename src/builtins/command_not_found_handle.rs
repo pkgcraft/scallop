@@ -23,5 +23,5 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "for internal use only",
-    exit_on_error: false,
+    error_func: None,
 };

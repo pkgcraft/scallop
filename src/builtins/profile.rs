@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use crate::builtins::Builtin;
+use crate::builtins::{output_error_func, Builtin};
 use crate::command::Command;
 use crate::{Error, Result};
 
@@ -51,5 +51,5 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "profile func arg1 arg2",
-    exit_on_error: false,
+    error_func: Some(output_error_func),
 };
