@@ -8,11 +8,12 @@ use crate::{bash, Error, Result};
 
 bitflags! {
     /// Flag values used with source::string() for altering string evaluation.
-    struct Eval: u32 {
+    pub struct Eval: u32 {
+        const NONE = 0;
         const NON_INTERACTIVE = bash::SEVAL_NONINT;
         const INTERACTIVE = bash::SEVAL_INTERACT;
         const NO_HISTORY = bash::SEVAL_NOHIST;
-        const NO_STR_FREE = bash::SEVAL_NOFREE;
+        const NO_FREE = bash::SEVAL_NOFREE;
         const RESET_LINE = bash::SEVAL_RESETLINE;
         const PARSE_ONLY = bash::SEVAL_PARSEONLY;
         const NO_LONG_JUMP = bash::SEVAL_NOLONGJMP;
@@ -32,7 +33,7 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<i32> {
     let str_ptr = c_str.as_ptr() as *mut _;
 
     unsafe {
-        ret = bash::evalstring(str_ptr, file_ptr, Eval::NO_STR_FREE.bits() as i32);
+        ret = bash::evalstring(str_ptr, file_ptr, Eval::NO_FREE.bits() as i32);
     }
 
     match ret {

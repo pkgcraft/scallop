@@ -10,7 +10,8 @@ use crate::Error;
 
 bitflags! {
     /// Flag values used with commands.
-    struct Flags: u32 {
+    pub struct Flags: u32 {
+        const NONE = 0;
         const WANT_SUBSHELL = bash::CMD_WANT_SUBSHELL;
         const FORCE_SUBSHELL = bash::CMD_FORCE_SUBSHELL;
         const INVERT_RETURN = bash::CMD_INVERT_RETURN;
@@ -27,10 +28,10 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn new<S: AsRef<str>>(s: S, flags: Option<i32>) -> crate::Result<Self> {
+    pub fn new<S: AsRef<str>>(s: S, flags: Option<Flags>) -> crate::Result<Self> {
         let cmd = Command::from_str(s.as_ref())?;
         if let Some(flags) = flags {
-            unsafe { (*cmd.ptr).flags |= flags };
+            unsafe { (*cmd.ptr).flags |= flags.bits() as i32 };
         }
         Ok(cmd)
     }

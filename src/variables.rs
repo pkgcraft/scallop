@@ -7,7 +7,8 @@ use crate::{bash, Error, Result};
 
 bitflags! {
     /// Flags for various attributes a given variable can have.
-    struct Attr: u32 {
+    pub struct Attr: u32 {
+        const NONE = 0;
         const EXPORTED = bash::att_exported;
         const READONLY = bash::att_readonly;
         const ARRAY = bash::att_array;
@@ -33,11 +34,11 @@ impl Variable {
         Variable { name: name.into() }
     }
 
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<i32>) {
+    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
         let name = CString::new(self.name.as_str()).unwrap();
         let value = CString::new(value.as_ref()).unwrap();
         let val = value.as_ptr() as *mut _;
-        let flags = flags.unwrap_or(0);
+        let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
         unsafe { bash::bind_variable(name.as_ptr(), val, flags) };
     }
 
