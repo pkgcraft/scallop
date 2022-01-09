@@ -12,6 +12,7 @@ use crate::bash;
 use crate::traits::IntoVec;
 use crate::{current_command, Result};
 
+pub mod command_not_found_handle;
 pub mod profile;
 
 type BuiltinFn = fn(&[&str]) -> Result<i32>;
