@@ -8,8 +8,8 @@ use std::{mem, ptr};
 
 use once_cell::sync::Lazy;
 
-use crate::{bash, Error};
 use crate::traits::IntoVec;
+use crate::{bash, Error};
 use crate::{current_command, Result};
 
 pub mod command_not_found_handle;
@@ -146,11 +146,9 @@ unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
 
     match builtin.run(args.as_slice()) {
         Ok(ret) => ret,
-        Err(e) => {
-            match builtin.error_func {
-                Some(func) => func(cmd, e),
-                None => -1,
-            }
-        }
+        Err(e) => match builtin.error_func {
+            Some(func) => func(cmd, e),
+            None => -1,
+        },
     }
 }
