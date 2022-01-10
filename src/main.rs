@@ -1,5 +1,3 @@
-use std::process;
-
 use scallop::{builtins, shell};
 
 fn main() {
@@ -9,5 +7,5 @@ fn main() {
     ];
     builtins::register(internal_builtins).expect("failed loading builtins");
 
-    process::exit(shell::interactive())
+    shell::interactive()
 }

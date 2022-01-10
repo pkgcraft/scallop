@@ -1,6 +1,6 @@
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
-use std::{env, mem, ptr};
+use std::{env, mem, process, ptr};
 
 use crate::bash;
 
@@ -23,7 +23,7 @@ pub fn reinitialize() {
 }
 
 /// Start an interactive shell session.
-pub fn interactive() -> i32 {
+pub fn interactive() {
     let argv_strs: Vec<CString> = env::args().map(|s| CString::new(s).unwrap()).collect();
     let mut argv_ptrs: Vec<*mut c_char> = argv_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
     argv_ptrs.push(ptr::null_mut());
@@ -42,5 +42,9 @@ pub fn interactive() -> i32 {
     mem::forget(env_strs);
     mem::forget(env_ptrs);
 
-    unsafe { bash::bash_main(argc, argv, env) }
+    let ret: i32;
+    unsafe {
+        ret = bash::bash_main(argc, argv, env);
+    }
+    process::exit(ret)
 }
