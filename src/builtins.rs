@@ -76,7 +76,7 @@ impl From<Builtin> for bash::Builtin {
 
         bash::Builtin {
             name,
-            function: run,
+            function: run_builtin,
             flags: 1,
             long_doc,
             short_doc,
@@ -134,7 +134,7 @@ pub fn output_error_func(cmd: &str, err: Error) -> i32 {
 /// # Safety
 /// This should only be used when registering an external builtin.
 #[no_mangle]
-unsafe extern "C" fn run(list: *mut bash::WordList) -> c_int {
+unsafe extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     // get the current running command name
     let cmd = current_command().expect("failed getting current command");
     // find its matching rust function and execute it
