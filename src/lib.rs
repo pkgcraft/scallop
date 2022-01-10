@@ -7,6 +7,7 @@ pub mod bash;
 pub mod builtins;
 pub mod command;
 pub mod error;
+pub mod shell;
 pub mod source;
 pub mod traits;
 pub mod variables;

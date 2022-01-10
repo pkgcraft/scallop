@@ -1,7 +1,6 @@
 use std::process;
 
-use scallop::bash::shell;
-use scallop::builtins;
+use scallop::{builtins, shell};
 
 fn main() {
     let internal_builtins = vec![
@@ -9,5 +8,6 @@ fn main() {
         &builtins::command_not_found_handle::BUILTIN,
     ];
     builtins::register(internal_builtins).expect("failed loading builtins");
-    process::exit(shell())
+
+    process::exit(shell::interactive())
 }

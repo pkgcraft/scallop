@@ -127,6 +127,9 @@ fn main() {
         .allowlist_function("execute_command")
         // shell.h
         .allowlist_function("bash_main")
+        .allowlist_function("shell_initialize")
+        .allowlist_function("shell_reinitialize")
+        .allowlist_var("shell_name")
         // variables.h
         .allowlist_function("get_string_value")
         .allowlist_function("bind_variable")
