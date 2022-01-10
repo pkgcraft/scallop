@@ -57,7 +57,8 @@ fn main() {
             .disable("progcomp", None)
             .without("bash-malloc", None)
             .disable("mem-scramble", None)
-            .disable("net-redirections", None);
+            .disable("net-redirections", None)
+            .disable("restricted", None);
 
         if !cfg!(feature = "nls") {
             bash.disable("nls", None);
