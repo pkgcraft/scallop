@@ -134,7 +134,9 @@ fn main() {
         // variables.h
         .allowlist_function("get_string_value")
         .allowlist_function("bind_variable")
+        .allowlist_function("bind_global_variable")
         .allowlist_function("unbind_variable")
+        .allowlist_function("check_unbind_variable")
         .allowlist_function("find_variable")
         .allowlist_var("att_.*") // variable attributes
         // externs.h

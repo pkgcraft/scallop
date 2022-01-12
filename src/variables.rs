@@ -21,6 +21,9 @@ bitflags! {
         const LOWERCASE = bash::att_lowercase;
         const CAPCASE = bash::att_capcase;
         const NAMEREF = bash::att_nameref;
+        const INVISIBLE = bash::att_invisible;
+        const NO_UNSET = bash::att_nounset;
+        const NO_ASSIGN = bash::att_noassign;
     }
 }
 
@@ -42,11 +45,60 @@ impl Variable {
         unsafe { bash::bind_variable(name.as_ptr(), val, flags) };
     }
 
+    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+        let name = CString::new(self.name.as_str()).unwrap();
+        let value = CString::new(value.as_ref()).unwrap();
+        let val = value.as_ptr() as *mut _;
+        let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
+        unsafe { bash::bind_global_variable(name.as_ptr(), val, flags) };
+    }
+
     pub fn unbind(&self) -> Result<i32> {
         let name = CString::new(self.name.as_str()).unwrap();
-        let ret: i32;
-        unsafe { ret = bash::unbind_variable(name.as_ptr()) };
-        Ok(ret)
+        match unsafe { bash::check_unbind_variable(name.as_ptr()) } {
+            0 => Ok(0),
+            _ => Err(Error::new(format!(
+                "failed unbinding variable: {}",
+                self.name
+            ))),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ScopedVariable {
+    var: Variable,
+    orig: Option<String>,
+}
+
+/// Variable that will reset itself to its original value when it leaves scope.
+impl ScopedVariable {
+    #[inline]
+    pub fn new<S: Into<String>>(name: S) -> Self {
+        let var = Variable::new(name);
+        let orig = string_value(&var.name);
+        ScopedVariable { var, orig }
+    }
+
+    #[inline]
+    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+        self.var.bind(value, flags)
+    }
+
+    #[inline]
+    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+        self.var.bind_global(value, flags)
+    }
+}
+
+impl Drop for ScopedVariable {
+    #[inline]
+    fn drop(&mut self) {
+        if let Some(val) = &self.orig {
+            self.var.bind(val, None);
+        } else {
+            self.var.unbind().unwrap();
+        }
     }
 }
 
