@@ -19,8 +19,13 @@ pub struct Shell;
 
 impl Shell {
     /// Create and initialize the shell for general use.
-    pub fn new<S: AsRef<str>>(name: S, builtins: Vec<&'static builtins::Builtin>) -> Result<Self> {
-        builtins::register(builtins)?;
+    pub fn new<S: AsRef<str>>(
+        name: S,
+        builtins: Option<Vec<&'static builtins::Builtin>>,
+    ) -> Result<Self> {
+        if let Some(builtins) = builtins {
+            builtins::register(builtins)?;
+        }
 
         let name = String::from(name.as_ref());
         let shell_name = CString::new(name.as_str()).unwrap();

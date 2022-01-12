@@ -6,6 +6,6 @@ fn main() {
         &builtins::command_not_found_handle::BUILTIN,
     ];
 
-    let sh = Shell::new("scallop", internal_builtins).expect("failed initializing shell");
+    let sh = Shell::new("scallop", Some(internal_builtins)).expect("failed initializing shell");
     sh.interactive()
 }
