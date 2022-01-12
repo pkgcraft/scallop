@@ -39,6 +39,7 @@ impl Shell {
     }
 
     /// Reset the shell back to a pristine state.
+    #[inline]
     pub fn reset(&self) {
         unsafe { bash::shell_reinitialize() };
     }
@@ -70,5 +71,12 @@ impl Shell {
             ret = bash::bash_main(argc, argv, env);
         }
         process::exit(ret)
+    }
+}
+
+impl Drop for Shell {
+    #[inline]
+    fn drop(&mut self) {
+        self.reset()
     }
 }
