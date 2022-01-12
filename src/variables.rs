@@ -103,11 +103,11 @@ impl Drop for ScopedVariable {
 }
 
 /// Get the string value of a given variable name.
-pub fn string_value(name: &str) -> Option<&str> {
+pub fn string_value(name: &str) -> Option<String> {
     let name = CString::new(name).unwrap();
     match unsafe { bash::get_string_value(name.as_ptr()) } {
         s if s.is_null() => None,
-        s => Some(unsafe { CStr::from_ptr(s).to_str().unwrap() }),
+        s => Some(unsafe { String::from(CStr::from_ptr(s).to_str().unwrap()) }),
     }
 }
 
