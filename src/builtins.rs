@@ -9,8 +9,7 @@ use std::{mem, ptr};
 use once_cell::sync::Lazy;
 
 use crate::traits::IntoVec;
-use crate::{bash, Error};
-use crate::{current_command, Result};
+use crate::{bash, command, Error, Result};
 
 pub mod command_not_found_handle;
 pub mod profile;
@@ -136,7 +135,7 @@ pub fn output_error_func(cmd: &str, err: Error) -> i32 {
 #[no_mangle]
 unsafe extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     // get the current running command name
-    let cmd = current_command().expect("failed getting current command");
+    let cmd = command::current().expect("failed getting current command");
     // find its matching rust function and execute it
     let builtin_map = BUILTINS.read().unwrap();
     let builtin = builtin_map
