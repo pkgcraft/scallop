@@ -31,10 +31,14 @@ bitflags! {
 pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
     let name = name.as_ref();
     let cstr = CString::new(name).unwrap();
-    match unsafe { bash::check_unbind_variable(cstr.as_ptr()) } {
-        0 => Ok(0),
-        _ => Err(Error::new(format!("failed unbinding variable: {}", name))),
+    let var = unsafe { bash::find_variable(cstr.as_ptr()).as_ref() };
+    if var.is_some() {
+        let ret = unsafe { bash::check_unbind_variable(cstr.as_ptr()) };
+        if ret != 0 {
+            return Err(Error::new(format!("failed unbinding variable: {}", name)));
+        }
     }
+    Ok(0)
 }
 
 #[derive(Debug, Clone)]
