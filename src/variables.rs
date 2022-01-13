@@ -98,10 +98,13 @@ impl ScopedVariable {
 impl Drop for ScopedVariable {
     #[inline]
     fn drop(&mut self) {
-        if let Some(val) = &self.orig {
-            self.var.bind(val, None);
-        } else {
-            self.var.unbind().unwrap();
+        let current = string_value(&self.var.name);
+        if current != self.orig {
+            if let Some(val) = &self.orig {
+                self.var.bind(val, None);
+            } else {
+                self.var.unbind().unwrap();
+            }
         }
     }
 }
