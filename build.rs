@@ -25,6 +25,7 @@ impl ParseCallbacks for BashCallback {
             // global mutables
             "global_command" => Some("GLOBAL_COMMAND".into()),
             "this_command_name" => Some("CURRENT_COMMAND".into()),
+            "ifs_value" => Some("IFS".into()),
             _ => None,
         }
     }
@@ -147,12 +148,15 @@ fn main() {
         .allowlist_function("pop_stream")
         // dispose_cmd.h
         .allowlist_function("dispose_command")
+        .allowlist_function("dispose_words")
         // builtins/common.h
         .allowlist_function("evalstring")
         .allowlist_function("source_file")
         .allowlist_function("register_builtins")
         .allowlist_var("SEVAL_.*")
         // subst.h
+        .allowlist_function("list_string")
+        .allowlist_var("ifs_value")
         .allowlist_var("ASS_.*")
         // array.h
         .allowlist_function("array_to_argv")

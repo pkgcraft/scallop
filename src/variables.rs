@@ -3,6 +3,7 @@ use std::slice;
 
 use bitflags::bitflags;
 
+use crate::traits::IntoVec;
 use crate::{bash, Error, Result};
 
 bitflags! {
@@ -102,12 +103,27 @@ impl Drop for ScopedVariable {
     }
 }
 
-/// Get the string value of a given variable name.
+/// Get the raw string value of a given variable name.
 pub fn string_value(name: &str) -> Option<String> {
     let name = CString::new(name).unwrap();
     match unsafe { bash::get_string_value(name.as_ptr()) } {
         s if s.is_null() => None,
         s => Some(unsafe { String::from(CStr::from_ptr(s).to_str().unwrap()) }),
+    }
+}
+
+/// Get the string value of a given variable name splitting it into Vec<String> based on IFS.
+pub fn string_vec(name: &str) -> Option<Vec<String>> {
+    let name = CString::new(name).unwrap();
+    match unsafe { bash::get_string_value(name.as_ptr()) } {
+        s if s.is_null() => None,
+        s => {
+            let words = unsafe { bash::list_string(s, bash::IFS, 1) };
+            // TODO: implement iterators directly for WordList
+            let strings = words.into_vec().iter().map(|s| s.to_string()).collect();
+            unsafe { bash::dispose_words(words) };
+            Some(strings)
+        }
     }
 }
 
