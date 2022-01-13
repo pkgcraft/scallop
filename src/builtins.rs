@@ -134,7 +134,7 @@ unsafe extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     let builtin = builtin_map
         .get(cmd)
         .unwrap_or_else(|| panic!("unknown builtin: {}", cmd));
-    let args = unsafe { list.into_vec().unwrap() };
+    let args = list.into_vec();
 
     match (builtin.func)(args.as_slice()) {
         Ok(ret) => ret,
