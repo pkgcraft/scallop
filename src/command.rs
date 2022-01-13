@@ -88,12 +88,6 @@ impl FromStr for Command {
 /// Get the currently running command name if one exists.
 #[inline]
 pub fn current<'a>() -> Option<&'a str> {
-    let cmd_ptr = unsafe { bash::CURRENT_COMMAND };
-    match cmd_ptr.is_null() {
-        true => None,
-        false => {
-            let cmd = unsafe { CStr::from_ptr(cmd_ptr).to_str().unwrap() };
-            Some(cmd)
-        }
-    }
+    let cmd_ptr = unsafe { bash::CURRENT_COMMAND.as_ref() };
+    cmd_ptr.map(|s| unsafe { CStr::from_ptr(s).to_str().unwrap() })
 }
