@@ -32,7 +32,7 @@ impl Shell {
 
         unsafe {
             bash::shell_name = shell_name.as_ptr() as *mut _;
-            bash::shell_initialize();
+            bash::lib_init();
         }
 
         Ok(Shell)
@@ -41,7 +41,7 @@ impl Shell {
     /// Reset the shell back to a pristine state.
     #[inline]
     pub fn reset(&self) {
-        unsafe { bash::shell_reinitialize() };
+        unsafe { bash::lib_reset() };
     }
 
     /// Start an interactive shell session.
