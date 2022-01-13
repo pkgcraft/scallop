@@ -28,6 +28,23 @@ bitflags! {
     }
 }
 
+bitflags! {
+    /// Flag values controlling how assignment statements are treated.
+    pub struct Assign: u32 {
+        const NONE = 0;
+        const APPEND = bash::ASS_APPEND;
+        const LOCAL = bash::ASS_MKLOCAL;
+        const GLOBAL = bash::ASS_MKGLOBAL;
+        const NAMEREF = bash::ASS_NAMEREF;
+        const FORCE = bash::ASS_FORCE;
+        const CHKLOCAL = bash::ASS_CHKLOCAL;
+        const NOEXPAND = bash::ASS_NOEXPAND;
+        const NOEVAL = bash::ASS_NOEVAL;
+        const NOLONGJMP = bash::ASS_NOLONGJMP;
+        const NOINVIS = bash::ASS_NOINVIS;
+    }
+}
+
 pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
     let name = name.as_ref();
     let cstr = CString::new(name).unwrap();
@@ -41,19 +58,19 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
     Ok(0)
 }
 
-pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Attr>) {
+pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>) {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
-    let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
+    let flags = flags.unwrap_or(Assign::NONE).bits() as i32;
     unsafe { bash::bind_variable(name.as_ptr(), val, flags) };
 }
 
-pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Attr>) {
+pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>) {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
-    let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
+    let flags = flags.unwrap_or(Assign::NONE).bits() as i32;
     unsafe { bash::bind_global_variable(name.as_ptr(), val, flags) };
 }
 
@@ -68,12 +85,12 @@ impl Variable {
     }
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
         bind(self.name.as_str(), value.as_ref(), flags)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
         bind_global(self.name.as_str(), value.as_ref(), flags)
     }
 
@@ -99,12 +116,12 @@ impl ScopedVariable {
     }
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
         self.var.bind(value, flags)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
+    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
         self.var.bind_global(value, flags)
     }
 }
