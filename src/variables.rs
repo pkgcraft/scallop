@@ -28,6 +28,15 @@ bitflags! {
     }
 }
 
+pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
+    let name = name.as_ref();
+    let cstr = CString::new(name).unwrap();
+    match unsafe { bash::check_unbind_variable(cstr.as_ptr()) } {
+        0 => Ok(0),
+        _ => Err(Error::new(format!("failed unbinding variable: {}", name))),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Variable {
     pub name: String,
@@ -54,15 +63,9 @@ impl Variable {
         unsafe { bash::bind_global_variable(name.as_ptr(), val, flags) };
     }
 
+    #[inline]
     pub fn unbind(&self) -> Result<i32> {
-        let name = CString::new(self.name.as_str()).unwrap();
-        match unsafe { bash::check_unbind_variable(name.as_ptr()) } {
-            0 => Ok(0),
-            _ => Err(Error::new(format!(
-                "failed unbinding variable: {}",
-                self.name
-            ))),
-        }
+        unbind(self.name.as_str())
     }
 }
 
