@@ -134,7 +134,7 @@ pub fn string_vec(name: &str) -> Option<Vec<String>> {
 }
 
 /// Get the value of an array for a given variable name.
-pub fn array_to_vec(name: &str) -> Result<Vec<&str>> {
+pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
     let var_name = CString::new(name).unwrap();
     let var = unsafe { bash::find_variable(var_name.as_ptr()).as_ref() };
     let array_ptr = match var {
@@ -146,14 +146,15 @@ pub fn array_to_vec(name: &str) -> Result<Vec<&str>> {
     };
 
     let mut count: i32 = 0;
-    let strings: Vec<&str>;
+    let strings: Vec<String>;
 
     unsafe {
         let str_array = bash::array_to_argv(array_ptr, &mut count);
         strings = slice::from_raw_parts(str_array, count as usize)
             .iter()
-            .map(|s| CStr::from_ptr(*s).to_str().unwrap())
+            .map(|s| String::from(CStr::from_ptr(*s).to_str().unwrap()))
             .collect();
+        bash::strvec_dispose(str_array);
     }
 
     Ok(strings)

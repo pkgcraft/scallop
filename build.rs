@@ -142,6 +142,7 @@ fn main() {
         .allowlist_var("att_.*") // variable attributes
         // externs.h
         .allowlist_function("parse_command")
+        .allowlist_function("strvec_dispose")
         // input.h
         .allowlist_function("with_input_from_string")
         .allowlist_function("push_stream")
