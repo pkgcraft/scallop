@@ -41,6 +41,22 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
     Ok(0)
 }
 
+pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Attr>) {
+    let name = CString::new(name.as_ref()).unwrap();
+    let value = CString::new(value.as_ref()).unwrap();
+    let val = value.as_ptr() as *mut _;
+    let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
+    unsafe { bash::bind_variable(name.as_ptr(), val, flags) };
+}
+
+pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Attr>) {
+    let name = CString::new(name.as_ref()).unwrap();
+    let value = CString::new(value.as_ref()).unwrap();
+    let val = value.as_ptr() as *mut _;
+    let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
+    unsafe { bash::bind_global_variable(name.as_ptr(), val, flags) };
+}
+
 #[derive(Debug, Clone)]
 pub struct Variable {
     pub name: String,
@@ -51,20 +67,14 @@ impl Variable {
         Variable { name: name.into() }
     }
 
+    #[inline]
     pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
-        let name = CString::new(self.name.as_str()).unwrap();
-        let value = CString::new(value.as_ref()).unwrap();
-        let val = value.as_ptr() as *mut _;
-        let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
-        unsafe { bash::bind_variable(name.as_ptr(), val, flags) };
+        bind(self.name.as_str(), value.as_ref(), flags)
     }
 
+    #[inline]
     pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Attr>) {
-        let name = CString::new(self.name.as_str()).unwrap();
-        let value = CString::new(value.as_ref()).unwrap();
-        let val = value.as_ptr() as *mut _;
-        let flags = flags.unwrap_or(Attr::NONE).bits() as i32;
-        unsafe { bash::bind_global_variable(name.as_ptr(), val, flags) };
+        bind_global(self.name.as_str(), value.as_ref(), flags)
     }
 
     #[inline]
