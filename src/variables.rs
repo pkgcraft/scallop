@@ -58,20 +58,30 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
     Ok(0)
 }
 
-pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>) {
+pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
     let flags = flags.unwrap_or(Assign::NONE).bits() as i32;
-    unsafe { bash::bind_variable(name.as_ptr(), val, flags) };
+    let var = unsafe { bash::bind_variable(name.as_ptr(), val, flags).as_mut() };
+    if let Some(var) = var {
+        if let Some(attrs) = attrs {
+            var.attributes |= attrs.bits() as i32;
+        }
+    }
 }
 
-pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>) {
+pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
     let flags = flags.unwrap_or(Assign::NONE).bits() as i32;
-    unsafe { bash::bind_global_variable(name.as_ptr(), val, flags) };
+    let var = unsafe { bash::bind_global_variable(name.as_ptr(), val, flags).as_mut() };
+    if let Some(var) = var {
+        if let Some(attrs) = attrs {
+            var.attributes |= attrs.bits() as i32;
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -85,13 +95,13 @@ impl Variable {
     }
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
-        bind(self.name.as_str(), value.as_ref(), flags)
+    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+        bind(self.name.as_str(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
-        bind_global(self.name.as_str(), value.as_ref(), flags)
+    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+        bind_global(self.name.as_str(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
@@ -116,13 +126,13 @@ impl ScopedVariable {
     }
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
-        self.var.bind(value, flags)
+    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+        self.var.bind(value, flags, attrs)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>) {
-        self.var.bind_global(value, flags)
+    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+        self.var.bind_global(value, flags, attrs)
     }
 }
 
@@ -132,7 +142,7 @@ impl Drop for ScopedVariable {
         let current = string_value(&self.var.name);
         if current != self.orig {
             if let Some(val) = &self.orig {
-                self.var.bind(val, None);
+                self.var.bind(val, None, None);
             } else {
                 self.var.unbind().unwrap();
             }
