@@ -14,8 +14,8 @@ use crate::{bash, command, Error, Result};
 pub mod command_not_found_handle;
 pub mod profile;
 
-type BuiltinFn = fn(&[&str]) -> Result<i32>;
-type BuiltinErrorFn = fn(&str, Error) -> i32;
+type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
+type BuiltinErrorFn = fn(&str, Error);
 
 #[derive(Clone, Copy)]
 pub struct Builtin {
@@ -116,9 +116,40 @@ where
 }
 
 /// Output the builtin's error string to stderr.
-pub fn output_error_func(cmd: &str, err: Error) -> i32 {
+pub fn output_error_func(cmd: &str, err: Error) {
     eprintln!("{}: error: {}", cmd, err);
-    -1
+}
+
+pub enum ExecStatus {
+    Success,
+    Failure,
+}
+
+impl From<ExecStatus> for i32 {
+    fn from(exec: ExecStatus) -> i32 {
+        match exec {
+            ExecStatus::Success => bash::EXECUTION_SUCCESS as i32,
+            ExecStatus::Failure => bash::EXECUTION_FAILURE as i32,
+        }
+    }
+}
+
+impl From<&ExecStatus> for bool {
+    fn from(exec: &ExecStatus) -> bool {
+        match exec {
+            ExecStatus::Success => true,
+            ExecStatus::Failure => false,
+        }
+    }
+}
+
+impl From<bool> for ExecStatus {
+    fn from(value: bool) -> ExecStatus {
+        match value {
+            true => ExecStatus::Success,
+            false => ExecStatus::Failure,
+        }
+    }
 }
 
 /// Builtin function wrapper converting between rust and C types.
@@ -137,10 +168,12 @@ unsafe extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     let args = list.into_vec();
 
     match (builtin.func)(args.as_slice()) {
-        Ok(ret) => ret,
-        Err(e) => match builtin.error_func {
-            Some(func) => func(cmd, e),
-            None => -1,
-        },
+        Ok(ret) => ret as i32,
+        Err(e) => {
+            if let Some(func) = builtin.error_func {
+                func(cmd, e);
+            }
+            ExecStatus::Failure as i32
+        }
     }
 }

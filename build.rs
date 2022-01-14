@@ -132,6 +132,8 @@ fn main() {
         .allowlist_function("lib_init")
         .allowlist_function("lib_reset")
         .allowlist_var("shell_name")
+        .allowlist_var("EXECUTION_FAILURE")
+        .allowlist_var("EXECUTION_SUCCESS")
         // variables.h
         .allowlist_function("get_string_value")
         .allowlist_function("bind_variable")

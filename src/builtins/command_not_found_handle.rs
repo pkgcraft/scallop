@@ -1,4 +1,4 @@
-use crate::builtins::Builtin;
+use crate::builtins::{Builtin, ExecStatus};
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "\
@@ -9,7 +9,7 @@ command_not_found_handle() function method instead.
 ";
 
 #[doc = stringify!(LONG_DOC)]
-pub(crate) fn run(args: &[&str]) -> Result<i32> {
+pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     let cmd = args[0];
     let full_cmd = args.join(" ");
     Err(Error::new(format!(

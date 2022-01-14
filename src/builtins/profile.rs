@@ -3,14 +3,14 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
-use crate::builtins::{output_error_func, Builtin};
+use crate::builtins::{output_error_func, Builtin, ExecStatus};
 use crate::command::Command;
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "Profile a given function or command.";
 
 #[doc = stringify!(LONG_DOC)]
-pub(crate) fn run(args: &[&str]) -> Result<i32> {
+pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     if args.is_empty() {
         return Err(Error::new("requires 1 or more args, got 0"));
     }
@@ -43,7 +43,7 @@ pub(crate) fn run(args: &[&str]) -> Result<i32> {
         elapsed, loops, per_loop
     );
 
-    Ok(0)
+    Ok(ExecStatus::Success)
 }
 
 pub static BUILTIN: Builtin = Builtin {
