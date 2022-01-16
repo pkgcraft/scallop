@@ -218,8 +218,22 @@ mod tests {
         #[test]
         fn test_string_vec() {
             init("sh");
+            assert_eq!(string_vec("VAR"), None);
             bind("VAR", "1 2 3", None, None);
             assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
+        }
+
+        #[test]
+        fn test_scoped_variable() {
+            init("sh");
+            bind("VAR", "outer", None, None);
+            assert_eq!(string_value("VAR").unwrap(), "outer");
+            {
+                let var = ScopedVariable::new("VAR");
+                var.bind("inner", None, None);
+                assert_eq!(string_value("VAR").unwrap(), "inner");
+            }
+            assert_eq!(string_value("VAR").unwrap(), "outer");
         }
     }
 }
