@@ -3,6 +3,7 @@
 
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
+use std::path::Path;
 use std::{env, mem, process, ptr};
 
 pub mod bash;
@@ -68,6 +69,11 @@ impl Shell {
             ret = bash::bash_main(argc, argv, env);
         }
         process::exit(ret)
+    }
+
+    #[inline]
+    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<()> {
+        source::file(path)
     }
 }
 
