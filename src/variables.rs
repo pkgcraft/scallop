@@ -196,3 +196,30 @@ pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
 
     Ok(strings)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::init;
+
+    use rusty_fork::rusty_fork_test;
+
+    rusty_fork_test! {
+        #[test]
+        fn simple_bind_unbind() {
+            init("sh");
+            assert_eq!(string_value("VAR"), None);
+            bind("VAR", "1", None, None);
+            assert_eq!(string_value("VAR").unwrap(), "1");
+            unbind("VAR").unwrap();
+            assert_eq!(string_value("VAR"), None);
+        }
+
+        #[test]
+        fn test_string_vec() {
+            init("sh");
+            bind("VAR", "1 2 3", None, None);
+            assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
+        }
+    }
+}
