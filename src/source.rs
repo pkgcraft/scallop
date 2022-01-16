@@ -16,7 +16,7 @@ bitflags! {
         const NO_FREE = bash::SEVAL_NOFREE;
         const RESET_LINE = bash::SEVAL_RESETLINE;
         const PARSE_ONLY = bash::SEVAL_PARSEONLY;
-        const NO_LONG_JUMP = bash::SEVAL_NOLONGJMP;
+        const NO_LONGJMP = bash::SEVAL_NOLONGJMP;
         const FUNCDEF = bash::SEVAL_FUNCDEF;
         const ONE_COMMAND = bash::SEVAL_ONECMD;
         const NO_HISTORY_EXPANSION = bash::SEVAL_NOHISTEXP;
