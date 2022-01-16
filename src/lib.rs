@@ -19,10 +19,7 @@ pub struct Shell;
 
 impl Shell {
     /// Create and initialize the shell for general use.
-    pub fn new<S: AsRef<str>>(
-        name: S,
-        builtins: Option<Vec<&'static builtins::Builtin>>,
-    ) -> Result<Self> {
+    pub fn new<S: AsRef<str>>(name: S, builtins: Option<Vec<&'static builtins::Builtin>>) -> Self {
         if let Some(builtins) = builtins {
             builtins::register(builtins);
         }
@@ -35,7 +32,7 @@ impl Shell {
             bash::lib_init();
         }
 
-        Ok(Shell)
+        Shell
     }
 
     /// Reset the shell back to a pristine state.
