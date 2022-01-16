@@ -56,4 +56,4 @@ jobs:
       run: cargo build -vv
 
     - name: Test crate
-      run: cargo test -vv
+      run: cargo test
