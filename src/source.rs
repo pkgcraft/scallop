@@ -25,7 +25,7 @@ bitflags! {
 
 static FILE_STR: Lazy<CString> = Lazy::new(|| CString::new("scallop::source::string").unwrap());
 
-pub fn string<S: AsRef<str>>(s: S) -> Result<i32> {
+pub fn string<S: AsRef<str>>(s: S) -> Result<()> {
     let ret: i32;
     let file_ptr = FILE_STR.as_ptr();
     let s = s.as_ref();
@@ -37,12 +37,12 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<i32> {
     }
 
     match ret {
-        0 => Ok(0),
+        0 => Ok(()),
         _ => return Err(Error::new(format!("failed sourcing string: {}", s))),
     }
 }
 
-pub fn file<P: AsRef<Path>>(path: &P) -> Result<i32> {
+pub fn file<P: AsRef<Path>>(path: &P) -> Result<()> {
     let ret: i32;
     let path = path.as_ref();
     let c_str = CString::new(path.to_str().unwrap()).unwrap();
@@ -53,7 +53,7 @@ pub fn file<P: AsRef<Path>>(path: &P) -> Result<i32> {
     }
 
     match ret {
-        0 => Ok(0),
+        0 => Ok(()),
         _ => return Err(Error::new(format!("failed sourcing file: {:?}", path))),
     }
 }

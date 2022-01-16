@@ -24,7 +24,7 @@ impl Shell {
         builtins: Option<Vec<&'static builtins::Builtin>>,
     ) -> Result<Self> {
         if let Some(builtins) = builtins {
-            builtins::register(builtins)?;
+            builtins::register(builtins);
         }
 
         let name = String::from(name.as_ref());

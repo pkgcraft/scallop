@@ -78,9 +78,7 @@ impl From<Builtin> for bash::Builtin {
 }
 
 /// Register builtins into the internal shell list for use.
-pub fn register(builtins: Vec<&'static Builtin>) -> Result<i32> {
-    let ret: i32;
-
+pub fn register(builtins: Vec<&'static Builtin>) {
     unsafe {
         // convert builtins into pointers
         let mut builtin_ptrs: Vec<*mut bash::Builtin> = builtins
@@ -90,7 +88,7 @@ pub fn register(builtins: Vec<&'static Builtin>) -> Result<i32> {
 
         // add builtins to bash's internal list
         let builtins_len: i32 = builtins.len().try_into().unwrap();
-        ret = bash::register_builtins(builtin_ptrs.as_mut_ptr(), builtins_len);
+        bash::register_builtins(builtin_ptrs.as_mut_ptr(), builtins_len);
 
         // reclaim pointers for proper deallocation
         builtin_ptrs
@@ -100,8 +98,6 @@ pub fn register(builtins: Vec<&'static Builtin>) -> Result<i32> {
 
     // add builtins to known mapping
     update_run_map(builtins);
-
-    Ok(ret)
 }
 
 static BUILTINS: Lazy<RwLock<HashMap<&'static str, &'static Builtin>>> =

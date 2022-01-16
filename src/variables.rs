@@ -45,7 +45,7 @@ bitflags! {
     }
 }
 
-pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
+pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
     let name = name.as_ref();
     let cstr = CString::new(name).unwrap();
     let var = unsafe { bash::find_variable(cstr.as_ptr()).as_ref() };
@@ -55,7 +55,7 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<i32> {
             return Err(Error::new(format!("failed unbinding variable: {}", name)));
         }
     }
-    Ok(0)
+    Ok(())
 }
 
 pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
@@ -105,7 +105,7 @@ impl Variable {
     }
 
     #[inline]
-    pub fn unbind(&self) -> Result<i32> {
+    pub fn unbind(&self) -> Result<()> {
         unbind(self.name.as_str())
     }
 }

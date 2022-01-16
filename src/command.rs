@@ -36,10 +36,10 @@ impl Command {
         Ok(cmd)
     }
 
-    pub fn execute(&self) -> crate::Result<i32> {
+    pub fn execute(&self) -> crate::Result<()> {
         match unsafe { bash::execute_command(self.ptr) } {
-            0 => Ok(0),
-            n => Err(Error::new(format!("command failed: {}", n))),
+            0 => Ok(()),
+            _ => Err(Error::new("command failed")),
         }
     }
 }
