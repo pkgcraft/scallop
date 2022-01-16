@@ -42,7 +42,7 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<()> {
     }
 }
 
-pub fn file<P: AsRef<Path>>(path: &P) -> Result<()> {
+pub fn file<P: AsRef<Path>>(path: P) -> Result<()> {
     let ret: i32;
     let path = path.as_ref();
     let c_str = CString::new(path.to_str().unwrap()).unwrap();
@@ -55,5 +55,52 @@ pub fn file<P: AsRef<Path>>(path: &P) -> Result<()> {
     match ret {
         0 => Ok(()),
         _ => return Err(Error::new(format!("failed sourcing file: {:?}", path))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Write;
+
+    use crate::variables::string_value;
+    use crate::{init, source};
+
+    use rusty_fork::rusty_fork_test;
+    use tempfile::NamedTempFile;
+
+    rusty_fork_test! {
+        #[test]
+        fn test_source_string() {
+            init("sh");
+            assert_eq!(string_value("VAR"), None);
+
+            source::string("VAR=1").unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "1");
+
+            source::string("VAR=").unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "");
+
+            source::string("unset -v VAR").unwrap();
+            assert_eq!(string_value("VAR"), None);
+        }
+
+        #[test]
+        fn test_source_file() {
+            init("sh");
+            assert_eq!(string_value("VAR"), None);
+            let mut file = NamedTempFile::new().unwrap();
+
+            writeln!(file, "VAR=1").unwrap();
+            source::file(file.path()).unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "1");
+
+            writeln!(file, "VAR=").unwrap();
+            source::file(file.path()).unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "");
+
+            writeln!(file, "unset -v VAR").unwrap();
+            source::file(file.path()).unwrap();
+            assert_eq!(string_value("VAR"), None);
+        }
     }
 }
