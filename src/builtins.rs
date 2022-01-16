@@ -88,6 +88,7 @@ pub fn register(builtins: Vec<&'static Builtin>) -> Result<i32> {
             .map(|&b| Box::into_raw(Box::new((*b).into())))
             .collect();
 
+        // add builtins to bash's internal list
         let builtins_len: i32 = builtins.len().try_into().unwrap();
         ret = bash::register_builtins(builtin_ptrs.as_mut_ptr(), builtins_len);
 
@@ -153,11 +154,8 @@ impl From<bool> for ExecStatus {
 }
 
 /// Builtin function wrapper converting between rust and C types.
-///
-/// # Safety
-/// This should only be used when registering an external builtin.
 #[no_mangle]
-unsafe extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
+extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     // get the current running command name
     let cmd = command::current().expect("failed getting current command");
     // find its matching rust function and execute it
