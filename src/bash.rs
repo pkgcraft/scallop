@@ -5,6 +5,9 @@ mod internal {
     #![allow(dead_code)]
     #![allow(unreachable_pub)]
     #![allow(clippy::all)]
+    // ignore warning from bindgen-generated struct alignment tests
+    // https://github.com/rust-lang/rust-bindgen/issues/1651
+    #![allow(deref_nullptr)]
 
     use std::os::raw::{c_char, c_int};
 
