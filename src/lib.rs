@@ -37,7 +37,7 @@ impl Shell {
 
     /// Reset the shell back to a pristine state.
     #[inline]
-    pub fn reset(&self) {
+    pub fn reset(&mut self) {
         unsafe { bash::lib_reset() };
     }
 
