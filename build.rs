@@ -157,6 +157,7 @@ fn main() {
         .allowlist_function("evalstring")
         .allowlist_function("source_file")
         .allowlist_function("register_builtins")
+        .allowlist_function("builtin_address_internal")
         .allowlist_var("SEVAL_.*")
         // subst.h
         .allowlist_function("list_string")
@@ -166,6 +167,10 @@ fn main() {
         .allowlist_function("array_to_argv")
         // builtins.h
         .blocklist_type("builtin")
+        .allowlist_var("BUILTIN_ENABLED")
+        .allowlist_var("STATIC_BUILTIN")
+        .allowlist_var("ASSIGNMENT_BUILTIN")
+        .allowlist_var("LOCALVAR_BUILTIN")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values

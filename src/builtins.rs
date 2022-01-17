@@ -6,6 +6,7 @@ use std::os::raw::{c_char, c_int};
 use std::sync::RwLock;
 use std::{mem, ptr};
 
+use bitflags::bitflags;
 use once_cell::sync::Lazy;
 
 use crate::traits::IntoVec;
@@ -16,6 +17,17 @@ pub mod profile;
 
 type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
 type BuiltinErrorFn = fn(&str, Error);
+
+bitflags! {
+    /// Flag values describing builtin attributes.
+    pub struct Attr: u32 {
+        const NONE = 0;
+        const ENABLED = bash::BUILTIN_ENABLED;
+        const STATIC = bash::STATIC_BUILTIN;
+        const ASSIGNMENT = bash::ASSIGNMENT_BUILTIN;
+        const LOCALVAR = bash::LOCALVAR_BUILTIN;
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct Builtin {
@@ -69,7 +81,7 @@ impl From<Builtin> for bash::Builtin {
         bash::Builtin {
             name,
             function: run_builtin,
-            flags: 1,
+            flags: Attr::ENABLED.bits() as i32,
             long_doc,
             short_doc,
             handle: ptr::null_mut(),
@@ -77,7 +89,49 @@ impl From<Builtin> for bash::Builtin {
     }
 }
 
-/// Register builtins into the internal shell list for use.
+/// Disable a given list of builtins by name ignoring any unknown.
+pub fn disable(builtins: &[&str]) -> Result<()> {
+    let mut unknown: Vec<&str> = vec![];
+    for name in builtins {
+        let builtin_name = CString::new(*name).unwrap();
+        let builtin_ptr = builtin_name.as_ptr() as *mut _;
+        match unsafe { bash::builtin_address_internal(builtin_ptr, 1).as_mut() } {
+            Some(b) => b.flags &= !Attr::ENABLED.bits() as i32,
+            None => unknown.push(name),
+        }
+    }
+
+    match unknown.is_empty() {
+        true => Ok(()),
+        false => Err(Error::new(format!(
+            "unknown builtins: {}",
+            unknown.join(", ")
+        ))),
+    }
+}
+
+/// Enable a given list of builtins by name ignoring any unknown.
+pub fn enable(builtins: &[&str]) -> Result<()> {
+    let mut unknown: Vec<&str> = vec![];
+    for name in builtins {
+        let builtin_name = CString::new(*name).unwrap();
+        let builtin_ptr = builtin_name.as_ptr() as *mut _;
+        match unsafe { bash::builtin_address_internal(builtin_ptr, 1).as_mut() } {
+            Some(b) => b.flags |= Attr::ENABLED.bits() as i32,
+            None => unknown.push(name),
+        }
+    }
+
+    match unknown.is_empty() {
+        true => Ok(()),
+        false => Err(Error::new(format!(
+            "unknown builtins: {}",
+            unknown.join(", ")
+        ))),
+    }
+}
+
+/// Register builtins into the internal list for use.
 pub fn register(builtins: Vec<&'static Builtin>) {
     unsafe {
         // convert builtins into pointers
