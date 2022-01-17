@@ -95,18 +95,23 @@ impl Variable {
     }
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+    pub fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
         bind(self.name.as_str(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+    pub fn bind_global<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
         bind_global(self.name.as_str(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    pub fn unbind(&self) -> Result<()> {
+    pub fn unbind(&mut self) -> Result<()> {
         unbind(self.name.as_str())
+    }
+
+    #[inline]
+    pub fn append(&mut self, s: &str) {
+        self.bind(s, Some(Assign::APPEND), None)
     }
 }
 
@@ -126,12 +131,12 @@ impl ScopedVariable {
     }
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+    pub fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
         self.var.bind(value, flags, attrs)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+    pub fn bind_global<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
         self.var.bind_global(value, flags, attrs)
     }
 }
@@ -224,12 +229,25 @@ mod tests {
         }
 
         #[test]
+        fn test_variable() {
+            init("sh");
+            let mut var = Variable::new("VAR");
+            assert_eq!(string_value("VAR"), None);
+            var.bind("1", None, None);
+            assert_eq!(string_value("VAR").unwrap(), "1");
+            var.append("2");
+            assert_eq!(string_value("VAR").unwrap(), "12");
+            var.append(" 3");
+            assert_eq!(string_value("VAR").unwrap(), "12 3");
+        }
+
+        #[test]
         fn test_scoped_variable() {
             init("sh");
             bind("VAR", "outer", None, None);
             assert_eq!(string_value("VAR").unwrap(), "outer");
             {
-                let var = ScopedVariable::new("VAR");
+                let mut var = ScopedVariable::new("VAR");
                 var.bind("inner", None, None);
                 assert_eq!(string_value("VAR").unwrap(), "inner");
             }
