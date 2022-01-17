@@ -89,7 +89,7 @@ impl From<Builtin> for bash::Builtin {
     }
 }
 
-/// Disable a given list of builtins by name ignoring any unknown.
+/// Disable a given list of builtins by name.
 pub fn disable(builtins: &[&str]) -> Result<()> {
     let mut unknown: Vec<&str> = vec![];
     for name in builtins {
@@ -110,7 +110,7 @@ pub fn disable(builtins: &[&str]) -> Result<()> {
     }
 }
 
-/// Enable a given list of builtins by name ignoring any unknown.
+/// Enable a given list of builtins by name.
 pub fn enable(builtins: &[&str]) -> Result<()> {
     let mut unknown: Vec<&str> = vec![];
     for name in builtins {
