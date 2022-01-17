@@ -91,9 +91,9 @@ pub fn register(builtins: Vec<&'static Builtin>) {
         bash::register_builtins(builtin_ptrs.as_mut_ptr(), builtins_len);
 
         // reclaim pointers for proper deallocation
-        builtin_ptrs
-            .iter()
-            .for_each(|&b| mem::drop(Box::from_raw(b)));
+        for b in builtin_ptrs {
+            mem::drop(Box::from_raw(b));
+        }
     }
 
     // add builtins to known mapping
