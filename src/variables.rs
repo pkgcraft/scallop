@@ -93,25 +93,36 @@ impl Variable {
     pub fn new<S: Into<String>>(name: S) -> Self {
         Variable { name: name.into() }
     }
+}
+
+pub trait Variables {
+    fn name(&self) -> &str;
 
     #[inline]
-    pub fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
-        bind(self.name.as_str(), value.as_ref(), flags, attrs)
+    fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+        bind(self.name(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    pub fn bind_global<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
-        bind_global(self.name.as_str(), value.as_ref(), flags, attrs)
+    fn bind_global<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+        bind_global(self.name(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    pub fn unbind(&mut self) -> Result<()> {
-        unbind(self.name.as_str())
+    fn unbind(&mut self) -> Result<()> {
+        unbind(self.name())
     }
 
     #[inline]
-    pub fn append(&mut self, s: &str) {
+    fn append(&mut self, s: &str) {
         self.bind(s, Some(Assign::APPEND), None)
+    }
+}
+
+impl Variables for Variable {
+    #[inline]
+    fn name(&self) -> &str {
+        self.name.as_str()
     }
 }
 
@@ -123,21 +134,17 @@ pub struct ScopedVariable {
 
 /// Variable that will reset itself to its original value when it leaves scope.
 impl ScopedVariable {
-    #[inline]
     pub fn new<S: Into<String>>(name: S) -> Self {
         let var = Variable::new(name);
         let orig = string_value(&var.name);
         ScopedVariable { var, orig }
     }
+}
 
+impl Variables for ScopedVariable {
     #[inline]
-    pub fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
-        self.var.bind(value, flags, attrs)
-    }
-
-    #[inline]
-    pub fn bind_global<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
-        self.var.bind_global(value, flags, attrs)
+    fn name(&self) -> &str {
+        self.var.name.as_str()
     }
 }
 
