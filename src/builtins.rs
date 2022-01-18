@@ -89,14 +89,17 @@ impl From<Builtin> for bash::Builtin {
     }
 }
 
-/// Disable a given list of builtins by name.
-pub fn disable(builtins: &[&str]) -> Result<()> {
+// Enable or disable a given list of builtins.
+fn toggle_status(builtins: &[&str], enable: bool) -> Result<()> {
     let mut unknown: Vec<&str> = vec![];
     for name in builtins {
         let builtin_name = CString::new(*name).unwrap();
         let builtin_ptr = builtin_name.as_ptr() as *mut _;
         match unsafe { bash::builtin_address_internal(builtin_ptr, 1).as_mut() } {
-            Some(b) => b.flags &= !Attr::ENABLED.bits() as i32,
+            Some(b) => match enable {
+                true => b.flags |= Attr::ENABLED.bits() as i32,
+                false => b.flags &= !Attr::ENABLED.bits() as i32,
+            },
             None => unknown.push(name),
         }
     }
@@ -110,25 +113,16 @@ pub fn disable(builtins: &[&str]) -> Result<()> {
     }
 }
 
-/// Enable a given list of builtins by name.
-pub fn enable(builtins: &[&str]) -> Result<()> {
-    let mut unknown: Vec<&str> = vec![];
-    for name in builtins {
-        let builtin_name = CString::new(*name).unwrap();
-        let builtin_ptr = builtin_name.as_ptr() as *mut _;
-        match unsafe { bash::builtin_address_internal(builtin_ptr, 1).as_mut() } {
-            Some(b) => b.flags |= Attr::ENABLED.bits() as i32,
-            None => unknown.push(name),
-        }
-    }
+/// Disable a given list of builtins by name.
+#[inline]
+pub fn disable(builtins: &[&str]) -> Result<()> {
+    toggle_status(builtins, false)
+}
 
-    match unknown.is_empty() {
-        true => Ok(()),
-        false => Err(Error::new(format!(
-            "unknown builtins: {}",
-            unknown.join(", ")
-        ))),
-    }
+/// Enable a given list of builtins by name.
+#[inline]
+pub fn enable(builtins: &[&str]) -> Result<()> {
+    toggle_status(builtins, true)
 }
 
 /// Register builtins into the internal list for use.
