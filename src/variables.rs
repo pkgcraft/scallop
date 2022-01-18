@@ -99,6 +99,11 @@ pub trait Variables {
     fn name(&self) -> &str;
 
     #[inline]
+    fn string_value(&self) -> Option<String> {
+        string_value(self.name())
+    }
+
+    #[inline]
     fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
         bind(self.name(), value.as_ref(), flags, attrs)
     }
@@ -239,13 +244,13 @@ mod tests {
         fn test_variable() {
             init("sh");
             let mut var = Variable::new("VAR");
-            assert_eq!(string_value("VAR"), None);
+            assert_eq!(var.string_value(), None);
             var.bind("1", None, None);
-            assert_eq!(string_value("VAR").unwrap(), "1");
+            assert_eq!(var.string_value().unwrap(), "1");
             var.append("2");
-            assert_eq!(string_value("VAR").unwrap(), "12");
+            assert_eq!(var.string_value().unwrap(), "12");
             var.append(" 3");
-            assert_eq!(string_value("VAR").unwrap(), "12 3");
+            assert_eq!(var.string_value().unwrap(), "12 3");
         }
 
         #[test]
@@ -256,7 +261,7 @@ mod tests {
             {
                 let mut var = ScopedVariable::new("VAR");
                 var.bind("inner", None, None);
-                assert_eq!(string_value("VAR").unwrap(), "inner");
+                assert_eq!(var.string_value().unwrap(), "inner");
             }
             assert_eq!(string_value("VAR").unwrap(), "outer");
         }
