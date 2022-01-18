@@ -223,21 +223,17 @@ mod tests {
 
     rusty_fork_test! {
         #[test]
-        fn simple_bind_unbind() {
-            init("sh");
-            assert_eq!(string_value("VAR"), None);
-            bind("VAR", "1", None, None);
-            assert_eq!(string_value("VAR").unwrap(), "1");
-            unbind("VAR").unwrap();
-            assert_eq!(string_value("VAR"), None);
-        }
-
-        #[test]
         fn test_string_vec() {
             init("sh");
             assert_eq!(string_vec("VAR"), None);
+            bind("VAR", "", None, None);
+            assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
+            bind("VAR", "a", None, None);
+            assert_eq!(string_vec("VAR").unwrap(), vec!["a"]);
             bind("VAR", "1 2 3", None, None);
             assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
+            unbind("VAR").unwrap();
+            assert_eq!(string_vec("VAR"), None);
         }
 
         #[test]
@@ -245,12 +241,16 @@ mod tests {
             init("sh");
             let mut var = Variable::new("VAR");
             assert_eq!(var.string_value(), None);
+            var.bind("", None, None);
+            assert_eq!(var.string_value().unwrap(), "");
             var.bind("1", None, None);
             assert_eq!(var.string_value().unwrap(), "1");
             var.append("2");
             assert_eq!(var.string_value().unwrap(), "12");
             var.append(" 3");
             assert_eq!(var.string_value().unwrap(), "12 3");
+            var.unbind().unwrap();
+            assert_eq!(var.string_value(), None);
         }
 
         #[test]
