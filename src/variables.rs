@@ -1,5 +1,6 @@
 use std::ffi::{CStr, CString};
-use std::slice;
+use std::os::raw::c_char;
+use std::{ptr, slice};
 
 use bitflags::bitflags;
 
@@ -42,6 +43,23 @@ bitflags! {
         const NOEVAL = bash::ASS_NOEVAL;
         const NOLONGJMP = bash::ASS_NOLONGJMP;
         const NOINVIS = bash::ASS_NOINVIS;
+    }
+}
+
+/// Run the `local` builtin with the given arguments.
+pub fn local(assign: &[&str]) -> Result<()> {
+    let arg_strs: Vec<CString> = assign.iter().map(|s| CString::new(*s).unwrap()).collect();
+    let mut arg_ptrs: Vec<*mut c_char> = arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
+    arg_ptrs.push(ptr::null_mut());
+    let args = arg_ptrs.as_ptr() as *mut _;
+
+    unsafe {
+        // TODO: add better support for converting string vectors/iterators to WordLists
+        let words = bash::strvec_to_word_list(args, 0, 0);
+        match bash::local_builtin(words) {
+            0 => Ok(()),
+            _ => Err(Error::new("failed running local builtin")),
+        }
     }
 }
 
@@ -214,6 +232,14 @@ pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
     Ok(strings)
 }
 
+/// Run a given function in bash function scope.
+pub fn bash_func<F: FnOnce()>(name: &str, func: F) {
+    let func_name = CString::new(name).unwrap();
+    unsafe { bash::push_context(func_name.as_ptr() as *mut _, 0, bash::TEMPORARY_ENV) };
+    func();
+    unsafe { bash::pop_context() };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -263,6 +289,17 @@ mod tests {
                 var.bind("inner", None, None);
                 assert_eq!(var.string_value().unwrap(), "inner");
             }
+            assert_eq!(string_value("VAR").unwrap(), "outer");
+        }
+
+        #[test]
+        fn test_bash_func() {
+            init("sh");
+            bind("VAR", "outer", None, None);
+            bash_func("func_name", || {
+                local(&["VAR=inner"]).unwrap();
+                assert_eq!(string_value("VAR").unwrap(), "inner");
+            });
             assert_eq!(string_value("VAR").unwrap(), "outer");
         }
     }

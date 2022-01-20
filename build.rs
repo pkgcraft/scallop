@@ -25,6 +25,7 @@ impl ParseCallbacks for BashCallback {
             // global mutables
             "global_command" => Some("GLOBAL_COMMAND".into()),
             "this_command_name" => Some("CURRENT_COMMAND".into()),
+            "temporary_env" => Some("TEMPORARY_ENV".into()),
             "ifs_value" => Some("IFS".into()),
             _ => None,
         }
@@ -142,10 +143,14 @@ fn main() {
         .allowlist_function("unbind_variable")
         .allowlist_function("check_unbind_variable")
         .allowlist_function("find_variable")
+        .allowlist_function("push_context")
+        .allowlist_function("pop_context")
+        .allowlist_var("temporary_env")
         .allowlist_var("att_.*") // variable attributes
         // externs.h
         .allowlist_function("parse_command")
         .allowlist_function("strvec_dispose")
+        .allowlist_function("strvec_to_word_list")
         // input.h
         .allowlist_function("with_input_from_string")
         .allowlist_function("push_stream")
