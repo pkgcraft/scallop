@@ -19,9 +19,7 @@ nls = []
 name = "scallop"
 path = "src/lib.rs"
 
-[[bin]]
-bench = false
-path = "src/main.rs"
+[[example]]
 name = "scallop"
 
 [dependencies]
