@@ -4,7 +4,8 @@ use std::path::Path;
 use bitflags::bitflags;
 use once_cell::sync::Lazy;
 
-use crate::{bash, Error, Result};
+use crate::error::ok_or_error;
+use crate::{bash, Result};
 
 bitflags! {
     /// Flag values used with source::string() for altering string evaluation.
@@ -26,36 +27,28 @@ bitflags! {
 static FILE_STR: Lazy<CString> = Lazy::new(|| CString::new("scallop::source::string").unwrap());
 
 pub fn string<S: AsRef<str>>(s: S) -> Result<()> {
-    let ret: i32;
     let file_ptr = FILE_STR.as_ptr();
     let s = s.as_ref();
     let c_str = CString::new(s).unwrap();
     let str_ptr = c_str.as_ptr() as *mut _;
 
     unsafe {
-        ret = bash::evalstring(str_ptr, file_ptr, Eval::NO_FREE.bits() as i32);
+        bash::evalstring(str_ptr, file_ptr, Eval::NO_FREE.bits() as i32);
     }
 
-    match ret {
-        0 => Ok(()),
-        _ => return Err(Error::new(format!("failed sourcing string: {}", s))),
-    }
+    ok_or_error()
 }
 
 pub fn file<P: AsRef<Path>>(path: P) -> Result<()> {
-    let ret: i32;
     let path = path.as_ref();
     let c_str = CString::new(path.to_str().unwrap()).unwrap();
     let str_ptr = c_str.as_ptr();
 
     unsafe {
-        ret = bash::source_file(str_ptr, 0);
+        bash::source_file(str_ptr, 0);
     }
 
-    match ret {
-        0 => Ok(()),
-        _ => return Err(Error::new(format!("failed sourcing file: {:?}", path))),
-    }
+    ok_or_error()
 }
 
 #[cfg(test)]
@@ -82,6 +75,9 @@ mod tests {
 
             source::string("unset -v VAR").unwrap();
             assert_eq!(string_value("VAR"), None);
+
+            // bad bash code raises error
+            assert!(source::string("local VAR").is_err());
         }
 
         #[test]
@@ -101,6 +97,10 @@ mod tests {
             writeln!(file, "unset -v VAR").unwrap();
             source::file(file.path()).unwrap();
             assert_eq!(string_value("VAR"), None);
+
+            // bad bash code raises error
+            writeln!(file, "local VAR").unwrap();
+            assert!(source::file(file.path()).is_err());
         }
     }
 }
