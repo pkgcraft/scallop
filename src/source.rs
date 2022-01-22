@@ -75,9 +75,18 @@ mod tests {
 
             source::string("unset -v VAR").unwrap();
             assert_eq!(string_value("VAR"), None);
+        }
 
+        #[test]
+        fn test_source_string_error() {
+            let _sh = Shell::new("sh", None);
             // bad bash code raises error
             assert!(source::string("local VAR").is_err());
+
+            // Sourcing still continues even when an error is returned
+            // because the analog to `set -e` isn't enabled.
+            assert!(source::string("local VAR\nVAR=1").is_err());
+            assert_eq!(string_value("VAR").unwrap(), "1");
         }
 
         #[test]
@@ -97,10 +106,23 @@ mod tests {
             writeln!(file, "unset -v VAR").unwrap();
             source::file(file.path()).unwrap();
             assert_eq!(string_value("VAR"), None);
+        }
+
+        #[test]
+        fn test_source_file_error() {
+            let _sh = Shell::new("sh", None);
+            assert_eq!(string_value("VAR"), None);
+            let mut file = NamedTempFile::new().unwrap();
 
             // bad bash code raises error
             writeln!(file, "local VAR").unwrap();
             assert!(source::file(file.path()).is_err());
+
+            // Sourcing still continues even when an error is returned
+            // because the analog to `set -e` isn't enabled.
+            writeln!(file, "VAR=1").unwrap();
+            assert!(source::file(file.path()).is_err());
+            assert_eq!(string_value("VAR").unwrap(), "1");
         }
     }
 }
