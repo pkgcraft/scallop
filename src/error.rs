@@ -35,7 +35,7 @@ thread_local! {
 /// Wrapper to convert internal bash errors into native errors.
 #[no_mangle]
 pub(crate) extern "C" fn bash_error(msg: *mut c_char) {
-    let msg = unsafe { String::from(CStr::from_ptr(msg).to_string_lossy()) };
+    let msg = unsafe { CStr::from_ptr(msg).to_string_lossy() };
     LAST_ERROR.with(|prev| {
         *prev.borrow_mut() = Some(Error::new(msg));
     });
@@ -59,7 +59,7 @@ pub fn ok_or_error() -> Result<()> {
 /// Wrapper to support outputting log messages for bash warnings.
 #[no_mangle]
 pub(crate) extern "C" fn bash_warning(msg: *mut c_char) {
-    if let Some(msg) = unsafe { CStr::from_ptr(msg).to_str().ok() } {
+    if let Ok(msg) = unsafe { CStr::from_ptr(msg).to_str() } {
         warn!(msg);
     }
 }
