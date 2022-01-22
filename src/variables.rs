@@ -4,6 +4,7 @@ use std::{ptr, slice};
 
 use bitflags::bitflags;
 
+use crate::error::ok_or_error;
 use crate::traits::IntoVec;
 use crate::{bash, Error, Result};
 
@@ -56,24 +57,21 @@ pub fn local(assign: &[&str]) -> Result<()> {
     unsafe {
         // TODO: add better support for converting string vectors/iterators to WordLists
         let words = bash::strvec_to_word_list(args, 0, 0);
-        match bash::local_builtin(words) {
-            0 => Ok(()),
-            _ => Err(Error::new("failed running local builtin")),
-        }
+        cmd_scope("local", || {
+            bash::local_builtin(words);
+        });
     }
+
+    ok_or_error()
 }
 
 pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
     let name = name.as_ref();
     let cstr = CString::new(name).unwrap();
-    let var = unsafe { bash::find_variable(cstr.as_ptr()).as_ref() };
-    if var.is_some() {
-        let ret = unsafe { bash::check_unbind_variable(cstr.as_ptr()) };
-        if ret != 0 {
-            return Err(Error::new(format!("failed unbinding variable: {}", name)));
-        }
+    unsafe {
+        bash::check_unbind_variable(cstr.as_ptr());
     }
-    Ok(())
+    ok_or_error()
 }
 
 pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
@@ -232,7 +230,7 @@ pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
     Ok(strings)
 }
 
-/// Run a given function in bash function scope.
+/// Run a function in bash function scope.
 pub fn bash_func<F: FnOnce()>(name: &str, func: F) {
     let func_name = CString::new(name).unwrap();
     unsafe { bash::push_context(func_name.as_ptr() as *mut _, 0, bash::TEMPORARY_ENV) };
@@ -240,17 +238,25 @@ pub fn bash_func<F: FnOnce()>(name: &str, func: F) {
     unsafe { bash::pop_context() };
 }
 
+/// Run a function under a named bash command scope.
+pub(crate) fn cmd_scope<F: FnOnce()>(name: &str, func: F) {
+    let name = CString::new(name).unwrap();
+    unsafe { bash::CURRENT_COMMAND = name.as_ptr() as *mut _ };
+    func();
+    unsafe { bash::CURRENT_COMMAND = ptr::null_mut() };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::init;
+    use crate::Shell;
 
     use rusty_fork::rusty_fork_test;
 
     rusty_fork_test! {
         #[test]
         fn test_string_vec() {
-            init("sh");
+            let _sh = Shell::new("sh", None);
             assert_eq!(string_vec("VAR"), None);
             bind("VAR", "", None, None);
             assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
@@ -263,8 +269,16 @@ mod tests {
         }
 
         #[test]
+        fn test_unbind_readonly() {
+            let _sh = Shell::new("sh", None);
+            bind("VAR", "1", None, Some(Attr::READONLY));
+            assert_eq!(string_value("VAR").unwrap(), "1");
+            assert!(unbind("VAR").is_err());
+        }
+
+        #[test]
         fn test_variable() {
-            init("sh");
+            let _sh = Shell::new("sh", None);
             let mut var = Variable::new("VAR");
             assert_eq!(var.string_value(), None);
             var.bind("", None, None);
@@ -281,7 +295,7 @@ mod tests {
 
         #[test]
         fn test_scoped_variable() {
-            init("sh");
+            let _sh = Shell::new("sh", None);
             bind("VAR", "outer", None, None);
             assert_eq!(string_value("VAR").unwrap(), "outer");
             {
@@ -294,7 +308,7 @@ mod tests {
 
         #[test]
         fn test_bash_func() {
-            init("sh");
+            let _sh = Shell::new("sh", None);
             bind("VAR", "outer", None, None);
             bash_func("func_name", || {
                 local(&["VAR=inner"]).unwrap();

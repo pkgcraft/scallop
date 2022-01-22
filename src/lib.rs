@@ -17,7 +17,7 @@ pub mod variables;
 pub use self::error::{Error, Result};
 
 pub struct Shell {
-    pub name: String,
+    _name: CString,
 }
 
 impl Shell {
@@ -28,10 +28,13 @@ impl Shell {
         }
 
         // initialize bash for library usage
-        let name = String::from(name.as_ref());
-        init(name.as_str());
+        let name = CString::new(name.as_ref()).unwrap();
+        unsafe {
+            bash::shell_name = name.as_ptr() as *mut _;
+            bash::lib_init(Some(error::bash_error), Some(error::bash_warning));
+        }
 
-        Shell { name }
+        Shell { _name: name }
     }
 
     /// Reset the shell back to a pristine state.
@@ -79,14 +82,5 @@ impl Drop for Shell {
     #[inline]
     fn drop(&mut self) {
         self.reset()
-    }
-}
-
-/// Initialize bash for library usage.
-pub(crate) fn init(name: &str) {
-    let shell_name = CString::new(name).unwrap();
-    unsafe {
-        bash::shell_name = shell_name.as_ptr() as *mut _;
-        bash::lib_init();
     }
 }

@@ -63,7 +63,7 @@ mod tests {
     use std::io::Write;
 
     use crate::variables::string_value;
-    use crate::{init, source};
+    use crate::{source, Shell};
 
     use rusty_fork::rusty_fork_test;
     use tempfile::NamedTempFile;
@@ -71,7 +71,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_source_string() {
-            init("sh");
+            let _sh = Shell::new("sh", None);
             assert_eq!(string_value("VAR"), None);
 
             source::string("VAR=1").unwrap();
@@ -86,7 +86,7 @@ mod tests {
 
         #[test]
         fn test_source_file() {
-            init("sh");
+            let _sh = Shell::new("sh", None);
             assert_eq!(string_value("VAR"), None);
             let mut file = NamedTempFile::new().unwrap();
 
