@@ -81,7 +81,8 @@ mod tests {
         fn test_source_string_error() {
             let _sh = Shell::new("sh", None);
             // bad bash code raises error
-            assert!(source::string("local VAR").is_err());
+            let err = source::string("local VAR").unwrap_err();
+            assert_eq!(err.to_string(), "sh: local: can only be used in a function");
 
             // Sourcing still continues even when an error is returned
             // because the analog to `set -e` isn't enabled.
@@ -116,7 +117,8 @@ mod tests {
 
             // bad bash code raises error
             writeln!(file, "local VAR").unwrap();
-            assert!(source::file(file.path()).is_err());
+            let err = source::file(file.path()).unwrap_err();
+            assert!(err.to_string().ends_with("line 1: local: can only be used in a function"));
 
             // Sourcing still continues even when an error is returned
             // because the analog to `set -e` isn't enabled.

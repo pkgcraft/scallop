@@ -74,7 +74,12 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
     ok_or_error()
 }
 
-pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+pub fn bind<S: AsRef<str>>(
+    name: S,
+    value: S,
+    flags: Option<Assign>,
+    attrs: Option<Attr>,
+) -> Result<()> {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
@@ -85,9 +90,15 @@ pub fn bind<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Opti
             var.attributes |= attrs.bits() as i32;
         }
     }
+    ok_or_error()
 }
 
-pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+pub fn bind_global<S: AsRef<str>>(
+    name: S,
+    value: S,
+    flags: Option<Assign>,
+    attrs: Option<Attr>,
+) -> Result<()> {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
@@ -98,6 +109,7 @@ pub fn bind_global<S: AsRef<str>>(name: S, value: S, flags: Option<Assign>, attr
             var.attributes |= attrs.bits() as i32;
         }
     }
+    ok_or_error()
 }
 
 #[derive(Debug, Clone)]
@@ -120,12 +132,22 @@ pub trait Variables {
     }
 
     #[inline]
-    fn bind<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+    fn bind<S: AsRef<str>>(
+        &mut self,
+        value: S,
+        flags: Option<Assign>,
+        attrs: Option<Attr>,
+    ) -> Result<()> {
         bind(self.name(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    fn bind_global<S: AsRef<str>>(&mut self, value: S, flags: Option<Assign>, attrs: Option<Attr>) {
+    fn bind_global<S: AsRef<str>>(
+        &mut self,
+        value: S,
+        flags: Option<Assign>,
+        attrs: Option<Attr>,
+    ) -> Result<()> {
         bind_global(self.name(), value.as_ref(), flags, attrs)
     }
 
@@ -135,7 +157,7 @@ pub trait Variables {
     }
 
     #[inline]
-    fn append(&mut self, s: &str) {
+    fn append(&mut self, s: &str) -> Result<()> {
         self.bind(s, Some(Assign::APPEND), None)
     }
 }
@@ -172,13 +194,15 @@ impl Variables for ScopedVariable {
 impl Drop for ScopedVariable {
     #[inline]
     fn drop(&mut self) {
-        let current = string_value(&self.var.name);
-        if current != self.orig {
-            if let Some(val) = &self.orig {
-                self.var.bind(val, None, None);
-            } else {
-                self.var.unbind().unwrap();
-            }
+        if string_value(&self.var.name) != self.orig {
+            let mut reset = || -> Result<()> {
+                if let Some(val) = &self.orig {
+                    self.var.bind(val, None, None)
+                } else {
+                    self.var.unbind()
+                }
+            };
+            reset().unwrap_or_else(|_| panic!("failed resetting variable: {}", self.var.name));
         }
     }
 }
@@ -258,22 +282,25 @@ mod tests {
         fn test_string_vec() {
             let _sh = Shell::new("sh", None);
             assert_eq!(string_vec("VAR"), None);
-            bind("VAR", "", None, None);
+            bind("VAR", "", None, None).unwrap();
             assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
-            bind("VAR", "a", None, None);
+            bind("VAR", "a", None, None).unwrap();
             assert_eq!(string_vec("VAR").unwrap(), vec!["a"]);
-            bind("VAR", "1 2 3", None, None);
+            bind("VAR", "1 2 3", None, None).unwrap();
             assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
             unbind("VAR").unwrap();
             assert_eq!(string_vec("VAR"), None);
         }
 
         #[test]
-        fn test_unbind_readonly() {
+        fn test_readonly_var() {
             let _sh = Shell::new("sh", None);
-            bind("VAR", "1", None, Some(Attr::READONLY));
+            bind("VAR", "1", None, Some(Attr::READONLY)).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "1");
-            assert!(unbind("VAR").is_err());
+            let err = bind("VAR", "1", None, None).unwrap_err();
+            assert_eq!(err.to_string(), "sh: VAR: readonly variable");
+            let err = unbind("VAR").unwrap_err();
+            assert_eq!(err.to_string(), "sh: VAR: cannot unset: readonly variable");
         }
 
         #[test]
@@ -281,13 +308,13 @@ mod tests {
             let _sh = Shell::new("sh", None);
             let mut var = Variable::new("VAR");
             assert_eq!(var.string_value(), None);
-            var.bind("", None, None);
+            var.bind("", None, None).unwrap();
             assert_eq!(var.string_value().unwrap(), "");
-            var.bind("1", None, None);
+            var.bind("1", None, None).unwrap();
             assert_eq!(var.string_value().unwrap(), "1");
-            var.append("2");
+            var.append("2").unwrap();
             assert_eq!(var.string_value().unwrap(), "12");
-            var.append(" 3");
+            var.append(" 3").unwrap();
             assert_eq!(var.string_value().unwrap(), "12 3");
             var.unbind().unwrap();
             assert_eq!(var.string_value(), None);
@@ -296,11 +323,11 @@ mod tests {
         #[test]
         fn test_scoped_variable() {
             let _sh = Shell::new("sh", None);
-            bind("VAR", "outer", None, None);
+            bind("VAR", "outer", None, None).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "outer");
             {
                 let mut var = ScopedVariable::new("VAR");
-                var.bind("inner", None, None);
+                var.bind("inner", None, None).unwrap();
                 assert_eq!(var.string_value().unwrap(), "inner");
             }
             assert_eq!(string_value("VAR").unwrap(), "outer");
@@ -309,7 +336,7 @@ mod tests {
         #[test]
         fn test_bash_func() {
             let _sh = Shell::new("sh", None);
-            bind("VAR", "outer", None, None);
+            bind("VAR", "outer", None, None).unwrap();
             bash_func("func_name", || {
                 local(&["VAR=inner"]).unwrap();
                 assert_eq!(string_value("VAR").unwrap(), "inner");
