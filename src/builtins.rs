@@ -58,6 +58,13 @@ impl Hash for Builtin {
     }
 }
 
+impl Builtin {
+    #[inline]
+    pub fn run(&self, args: &[&str]) -> Result<ExecStatus> {
+        (self.func)(args)
+    }
+}
+
 /// Convert a Builtin to its C equivalent.
 impl From<Builtin> for bash::Builtin {
     fn from(builtin: Builtin) -> bash::Builtin {
@@ -210,7 +217,7 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
         .unwrap_or_else(|| panic!("unknown builtin: {}", cmd));
     let args = list.into_vec();
 
-    match (builtin.func)(args.as_slice()) {
+    match builtin.run(args.as_slice()) {
         Ok(ret) => ret as i32,
         Err(e) => {
             if let Some(func) = builtin.error_func {
