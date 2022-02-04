@@ -15,7 +15,7 @@ use crate::{bash, command, Error, Result};
 pub mod command_not_found_handle;
 pub mod profile;
 
-type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
+pub type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
 type BuiltinErrorFn = fn(&str, Error);
 
 bitflags! {
