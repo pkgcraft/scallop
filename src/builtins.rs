@@ -165,6 +165,7 @@ pub fn output_error_func(cmd: &str, err: Error) {
     eprintln!("{}: error: {}", cmd, err);
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum ExecStatus {
     Success,
     Failure,
