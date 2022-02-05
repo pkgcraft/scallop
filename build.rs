@@ -126,9 +126,10 @@ fn main() {
         .allowlist_var("global_command")
         .allowlist_function("copy_command")
         .allowlist_var("CMD_.*")
-        // execute_command.h
+        // execute_cmd.h
         .allowlist_var("this_command_name")
         .allowlist_function("execute_command")
+        .allowlist_function("execute_shell_function")
         // shell.h
         .allowlist_function("bash_main")
         .allowlist_function("lib_init")
@@ -142,6 +143,7 @@ fn main() {
         .allowlist_function("bind_global_variable")
         .allowlist_function("unbind_variable")
         .allowlist_function("check_unbind_variable")
+        .allowlist_function("find_function")
         .allowlist_function("find_variable")
         .allowlist_function("push_context")
         .allowlist_function("pop_context")
