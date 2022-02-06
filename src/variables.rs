@@ -114,7 +114,7 @@ pub fn bind_global<S: AsRef<str>>(
 
 #[derive(Debug, Clone)]
 pub struct Variable {
-    pub name: String,
+    name: String,
 }
 
 impl Variable {
@@ -159,6 +159,28 @@ pub trait Variables {
     #[inline]
     fn append(&mut self, s: &str) -> Result<()> {
         self.bind(s, Some(Assign::APPEND), None)
+    }
+
+    #[inline]
+    fn shell_var(&self) -> Option<&mut bash::ShellVar> {
+        let var_name = CString::new(self.name()).unwrap();
+        unsafe { bash::find_variable(var_name.as_ptr()).as_mut() }
+    }
+
+    #[inline]
+    fn is_array(&self) -> bool {
+        match self.shell_var() {
+            None => false,
+            Some(v) => v.attributes as u32 & Attr::ARRAY.bits() != 0,
+        }
+    }
+
+    #[inline]
+    fn is_readonly(&self) -> bool {
+        match self.shell_var() {
+            None => false,
+            Some(v) => v.attributes as u32 & Attr::READONLY.bits() != 0,
+        }
     }
 }
 
@@ -255,6 +277,15 @@ pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
     }
 
     Ok(strings)
+}
+
+/// Get the value of a given variable as Vec<String>.
+pub fn var_to_vec(name: &str) -> Result<Vec<String>> {
+    let var = Variable::new(name);
+    match var.is_array() {
+        false => string_vec(name),
+        true => array_to_vec(name),
+    }
 }
 
 /// Run a function in bash function scope.
