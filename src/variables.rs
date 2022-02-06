@@ -215,16 +215,19 @@ pub fn string_value(name: &str) -> Option<String> {
 }
 
 /// Get the string value of a given variable name splitting it into Vec<String> based on IFS.
-pub fn string_vec(name: &str) -> Option<Vec<String>> {
-    let name = CString::new(name).unwrap();
-    let ptr = unsafe { bash::get_string_value(name.as_ptr()).as_mut() };
-    ptr.map(|s| {
-        let words = unsafe { bash::list_string(s, bash::IFS, 1) };
-        // TODO: implement iterators directly for WordList
-        let strings = words.into_vec().iter().map(|s| s.to_string()).collect();
-        unsafe { bash::dispose_words(words) };
-        strings
-    })
+pub fn string_vec(name: &str) -> Result<Vec<String>> {
+    let var_name = CString::new(name).unwrap();
+    let ptr = unsafe { bash::get_string_value(var_name.as_ptr()).as_mut() };
+    match ptr {
+        None => Err(Error::new(format!("undefined variable: {}", name))),
+        Some(s) => {
+            let words = unsafe { bash::list_string(s, bash::IFS, 1) };
+            // TODO: implement iterators directly for WordList
+            let strings = words.into_vec().iter().map(|s| s.to_string()).collect();
+            unsafe { bash::dispose_words(words) };
+            Ok(strings)
+        }
+    }
 }
 
 /// Get the value of an array for a given variable name.
@@ -281,7 +284,7 @@ mod tests {
         #[test]
         fn test_string_vec() {
             let _sh = Shell::new("sh", None);
-            assert_eq!(string_vec("VAR"), None);
+            assert!(string_vec("VAR").is_err());
             bind("VAR", "", None, None).unwrap();
             assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
             bind("VAR", "a", None, None).unwrap();
@@ -289,7 +292,7 @@ mod tests {
             bind("VAR", "1 2 3", None, None).unwrap();
             assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
             unbind("VAR").unwrap();
-            assert_eq!(string_vec("VAR"), None);
+            assert!(string_vec("VAR").is_err());
         }
 
         #[test]
