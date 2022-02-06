@@ -7,12 +7,14 @@ use crate::{bash, Result};
 
 #[derive(Debug)]
 pub struct Function<'a> {
+    name: String,
     func: &'a mut bash::ShellVar,
 }
 
 impl Function<'_> {
     /// Execute a given shell function.
-    pub fn execute(self, args: &[&str]) -> Result<()> {
+    pub fn execute(&mut self, args: &[&str]) -> Result<()> {
+        let args = [&[self.name.as_str()], args].concat();
         let arg_strs: Vec<CString> = args.iter().map(|s| CString::new(*s).unwrap()).collect();
         let mut arg_ptrs: Vec<*mut c_char> =
             arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
@@ -30,5 +32,8 @@ impl Function<'_> {
 pub fn find(name: &str) -> Option<Function> {
     let func_name = CString::new(name).unwrap();
     let func = unsafe { bash::find_function(func_name.as_ptr()).as_mut() };
-    func.map(|f| Function { func: f })
+    func.map(|f| Function {
+        name: name.to_string(),
+        func: f,
+    })
 }
