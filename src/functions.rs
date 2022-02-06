@@ -37,3 +37,31 @@ pub fn find(name: &str) -> Option<Function> {
         func: f,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::variables::string_value;
+    use crate::{functions, source, Shell};
+
+    use rusty_fork::rusty_fork_test;
+
+    rusty_fork_test! {
+        #[test]
+        fn find() {
+            let _sh = Shell::new("sh", None);
+            assert!(functions::find("foo").is_none());
+            source::string("foo() { :; }").unwrap();
+            assert!(functions::find("foo").is_some());
+        }
+
+        #[test]
+        fn execute() {
+            let _sh = Shell::new("sh", None);
+            assert_eq!(string_value("VAR"), None);
+            source::string("foo() { VAR=1; }").unwrap();
+            let mut func = functions::find("foo").unwrap();
+            func.execute(&[]).unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "1");
+        }
+    }
+}
