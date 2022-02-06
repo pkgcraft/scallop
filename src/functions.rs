@@ -58,9 +58,11 @@ mod tests {
         fn execute() {
             let _sh = Shell::new("sh", None);
             assert_eq!(string_value("VAR"), None);
-            source::string("foo() { VAR=1; }").unwrap();
+            source::string("foo() { VAR=$1; }").unwrap();
             let mut func = functions::find("foo").unwrap();
             func.execute(&[]).unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "");
+            func.execute(&["1"]).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "1");
         }
     }
