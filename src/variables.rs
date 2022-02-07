@@ -74,12 +74,11 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
     ok_or_error()
 }
 
-pub fn bind<S: AsRef<str>>(
-    name: S,
-    value: S,
-    flags: Option<Assign>,
-    attrs: Option<Attr>,
-) -> Result<()> {
+pub fn bind<S1, S2>(name: S1, value: S2, flags: Option<Assign>, attrs: Option<Attr>) -> Result<()>
+where
+    S1: AsRef<str>,
+    S2: AsRef<str>,
+{
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
@@ -230,14 +229,15 @@ impl Drop for ScopedVariable {
 }
 
 /// Get the raw string value of a given variable name.
-pub fn string_value(name: &str) -> Option<String> {
-    let name = CString::new(name).unwrap();
+pub fn string_value<S: AsRef<str>>(name: S) -> Option<String> {
+    let name = CString::new(name.as_ref()).unwrap();
     let ptr = unsafe { bash::get_string_value(name.as_ptr()).as_ref() };
     ptr.map(|s| unsafe { String::from(CStr::from_ptr(s).to_str().unwrap()) })
 }
 
 /// Get the string value of a given variable name splitting it into Vec<String> based on IFS.
-pub fn string_vec(name: &str) -> Result<Vec<String>> {
+pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
+    let name = name.as_ref();
     let var_name = CString::new(name).unwrap();
     let ptr = unsafe { bash::get_string_value(var_name.as_ptr()).as_mut() };
     match ptr {
@@ -253,7 +253,8 @@ pub fn string_vec(name: &str) -> Result<Vec<String>> {
 }
 
 /// Get the value of an array for a given variable name.
-pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
+pub fn array_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
+    let name = name.as_ref();
     let var_name = CString::new(name).unwrap();
     let var = unsafe { bash::find_variable(var_name.as_ptr()).as_ref() };
     let array_ptr = match var {
@@ -280,7 +281,8 @@ pub fn array_to_vec(name: &str) -> Result<Vec<String>> {
 }
 
 /// Get the value of a given variable as Vec<String>.
-pub fn var_to_vec(name: &str) -> Result<Vec<String>> {
+pub fn var_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
+    let name = name.as_ref();
     let var = Variable::new(name);
     match var.is_array() {
         false => string_vec(name),
