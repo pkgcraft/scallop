@@ -12,7 +12,7 @@ command_not_found_handle() function method instead.
 pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     let cmd = args[0];
     let full_cmd = args.join(" ");
-    Err(Error::new(format!(
+    Err(Error::Base(format!(
         "unknown command {:?} when executing: {}",
         cmd, full_cmd
     )))
@@ -23,5 +23,4 @@ pub static BUILTIN: Builtin = Builtin {
     func: run,
     help: LONG_DOC,
     usage: "for internal use only",
-    error_func: None,
 };

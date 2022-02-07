@@ -39,7 +39,7 @@ impl Command {
     pub fn execute(&self) -> crate::Result<()> {
         match unsafe { bash::execute_command(self.ptr) } {
             0 => Ok(()),
-            _ => Err(Error::new("command failed")),
+            _ => Err(Error::Base("command failed".into())),
         }
     }
 }
@@ -70,7 +70,7 @@ impl FromStr for Command {
             bash::with_input_from_string(cmd_ptr, name_ptr);
             cmd = match bash::parse_command() {
                 0 => bash::copy_command(bash::GLOBAL_COMMAND),
-                _ => return Err(Error::new(format!("failed parsing: {}", s))),
+                _ => return Err(Error::Base(format!("failed parsing: {}", s))),
             };
 
             // clean up global command

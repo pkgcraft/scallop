@@ -16,7 +16,6 @@ pub mod command_not_found_handle;
 pub mod profile;
 
 pub type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
-type BuiltinErrorFn = fn(&str, Error);
 
 bitflags! {
     /// Flag values describing builtin attributes.
@@ -35,7 +34,6 @@ pub struct Builtin {
     pub func: BuiltinFn,
     pub help: &'static str,
     pub usage: &'static str,
-    pub error_func: Option<BuiltinErrorFn>,
 }
 
 impl fmt::Debug for Builtin {
@@ -113,7 +111,7 @@ fn toggle_status(builtins: &[&str], enable: bool) -> Result<()> {
 
     match unknown.is_empty() {
         true => Ok(()),
-        false => Err(Error::new(format!(
+        false => Err(Error::Base(format!(
             "unknown builtins: {}",
             unknown.join(", ")
         ))),
@@ -167,11 +165,6 @@ where
     builtin_map.extend(builtins.into_iter().map(|b| (b.name, b)));
 }
 
-/// Output the builtin's error string to stderr.
-pub fn output_error_func(cmd: &str, err: Error) {
-    eprintln!("{}: error: {}", cmd, err);
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ExecStatus {
     Success,
@@ -220,8 +213,9 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     match builtin.run(args.as_slice()) {
         Ok(ret) => ret as i32,
         Err(e) => {
-            if let Some(func) = builtin.error_func {
-                func(cmd, e);
+            match e {
+                Error::Builtin(_) => eprintln!("{}: error: {}", cmd, e),
+                _ => eprintln!("{}", e),
             }
             ExecStatus::Failure as i32
         }

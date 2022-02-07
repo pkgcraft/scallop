@@ -1,32 +1,18 @@
 use std::cell::RefCell;
 use std::ffi::CStr;
-use std::fmt;
 use std::os::raw::c_char;
 
 use tracing::warn;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Clone)]
-pub struct Error {
-    pub message: String,
+#[derive(Debug, Clone, thiserror::Error)]
+pub enum Error {
+    #[error("{0}")]
+    Base(String),
+    #[error("{0}")]
+    Builtin(String),
 }
-
-impl Error {
-    pub fn new<S: Into<String>>(msg: S) -> Error {
-        Error {
-            message: msg.into(),
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl std::error::Error for Error {}
 
 thread_local! {
     static LAST_ERROR: RefCell<Option<Error>> = RefCell::new(None);
@@ -37,7 +23,7 @@ thread_local! {
 pub(crate) extern "C" fn bash_error(msg: *mut c_char) {
     let msg = unsafe { CStr::from_ptr(msg).to_string_lossy() };
     LAST_ERROR.with(|prev| {
-        *prev.borrow_mut() = Some(Error::new(msg));
+        *prev.borrow_mut() = Some(Error::Base(msg.into()));
     });
 }
 
