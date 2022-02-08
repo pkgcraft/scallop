@@ -95,22 +95,30 @@ impl From<Builtin> for bash::Builtin {
 }
 
 // Enable or disable a given list of builtins.
-fn toggle_status(builtins: &[&str], enable: bool) -> Result<()> {
+fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<String>> {
     let mut unknown: Vec<&str> = vec![];
+    let mut toggled: Vec<String> = vec![];
     for name in builtins {
-        let builtin_name = CString::new(*name).unwrap();
+        let name = name.as_ref();
+        let builtin_name = CString::new(name).unwrap();
         let builtin_ptr = builtin_name.as_ptr() as *mut _;
         match unsafe { bash::builtin_address_internal(builtin_ptr, 1).as_mut() } {
-            Some(b) => match enable {
-                true => b.flags |= Attr::ENABLED.bits() as i32,
-                false => b.flags &= !Attr::ENABLED.bits() as i32,
-            },
+            Some(b) => {
+                let enabled = (b.flags & Attr::ENABLED.bits() as i32) == 1;
+                if enabled != enable {
+                    toggled.push(name.to_string());
+                    match enable {
+                        true => b.flags |= Attr::ENABLED.bits() as i32,
+                        false => b.flags &= !Attr::ENABLED.bits() as i32,
+                    }
+                }
+            }
             None => unknown.push(name),
         }
     }
 
     match unknown.is_empty() {
-        true => Ok(()),
+        true => Ok(toggled),
         false => Err(Error::Base(format!(
             "unknown builtins: {}",
             unknown.join(", ")
@@ -120,14 +128,35 @@ fn toggle_status(builtins: &[&str], enable: bool) -> Result<()> {
 
 /// Disable a given list of builtins by name.
 #[inline]
-pub fn disable(builtins: &[&str]) -> Result<()> {
+pub fn disable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<String>> {
     toggle_status(builtins, false)
 }
 
 /// Enable a given list of builtins by name.
 #[inline]
-pub fn enable(builtins: &[&str]) -> Result<()> {
+pub fn enable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<String>> {
     toggle_status(builtins, true)
+}
+
+#[derive(Debug)]
+pub struct ScopedBuiltins {
+    builtins: Vec<String>,
+}
+
+/// Builtins that will automatically disabled when leaving scope.
+impl ScopedBuiltins {
+    pub fn new<S: AsRef<str>>(builtins: &[S]) -> Result<Self> {
+        let builtins = enable(builtins)?;
+        Ok(ScopedBuiltins { builtins })
+    }
+}
+
+impl Drop for ScopedBuiltins {
+    fn drop(&mut self) {
+        if !self.builtins.is_empty() {
+            disable(&self.builtins).unwrap_or_else(|_| panic!("failed disabling builtins"));
+        }
+    }
 }
 
 /// Register builtins into the internal list for use.
