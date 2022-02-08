@@ -22,7 +22,7 @@ mod internal {
     #[derive(Debug, Copy, Clone)]
     pub struct Builtin {
         pub name: *const c_char,
-        pub function: BuiltinFnPtr,
+        pub function: Option<BuiltinFnPtr>,
         pub flags: c_int,
         pub long_doc: *const *mut c_char,
         pub short_doc: *const c_char,

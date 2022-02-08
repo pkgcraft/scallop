@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-use std::ffi::CString;
+use std::collections::{HashMap, HashSet};
+use std::ffi::{CStr, CString};
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_int};
@@ -85,7 +85,7 @@ impl From<Builtin> for bash::Builtin {
 
         bash::Builtin {
             name,
-            function: run_builtin,
+            function: Some(run_builtin),
             flags: Attr::ENABLED.bits() as i32,
             long_doc,
             short_doc,
@@ -138,23 +138,52 @@ pub fn enable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<String>> {
     toggle_status(builtins, true)
 }
 
+/// Get the sets of enabled and disabled shell builtins.
+pub fn shell_builtins() -> (HashSet<String>, HashSet<String>) {
+    let mut enabled = HashSet::new();
+    let mut disabled = HashSet::new();
+    unsafe {
+        let end = (bash::NUM_SHELL_BUILTINS - 1) as isize;
+        for i in 0..end {
+            let builtin = *bash::SHELL_BUILTINS.offset(i);
+            // builtins with null functions are stubs for reserved keywords
+            if builtin.function.is_some() {
+                let name = String::from(CStr::from_ptr(builtin.name).to_str().unwrap());
+                if (builtin.flags & Attr::ENABLED.bits() as i32) == 1 {
+                    enabled.insert(name);
+                } else {
+                    disabled.insert(name);
+                }
+            }
+        }
+    }
+    (enabled, disabled)
+}
+
 #[derive(Debug)]
 pub struct ScopedBuiltins {
-    builtins: Vec<String>,
+    enabled: Vec<String>,
+    disabled: Vec<String>,
 }
 
 /// Builtins that will automatically disabled when leaving scope.
 impl ScopedBuiltins {
-    pub fn new<S: AsRef<str>>(builtins: &[S]) -> Result<Self> {
-        let builtins = enable(builtins)?;
-        Ok(ScopedBuiltins { builtins })
+    pub fn new<S: AsRef<str>>(builtins: (&[S], &[S])) -> Result<Self> {
+        let (add, sub) = builtins;
+        Ok(ScopedBuiltins {
+            enabled: enable(add)?,
+            disabled: disable(sub)?,
+        })
     }
 }
 
 impl Drop for ScopedBuiltins {
     fn drop(&mut self) {
-        if !self.builtins.is_empty() {
-            disable(&self.builtins).unwrap_or_else(|_| panic!("failed disabling builtins"));
+        if !self.enabled.is_empty() {
+            disable(&self.enabled).unwrap_or_else(|_| panic!("failed disabling builtins"));
+        }
+        if !self.disabled.is_empty() {
+            enable(&self.disabled).unwrap_or_else(|_| panic!("failed enabling builtins"));
         }
     }
 }
@@ -247,6 +276,39 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
                 _ => eprintln!("{}", e),
             }
             ExecStatus::Failure as i32
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Shell;
+
+    use rusty_fork::rusty_fork_test;
+
+    rusty_fork_test! {
+        #[test]
+        fn toggle_status() {
+            let _sh = Shell::new("sh", None);
+
+            // select a builtin to toggle
+            let (enabled, disabled) = shell_builtins();
+            assert!(!enabled.is_empty());
+            let builtin = enabled.iter().next().unwrap();
+            assert!(!disabled.contains(builtin));
+
+            // disable the builtin
+            disable(&[builtin]).unwrap();
+            let (enabled, disabled) = shell_builtins();
+            assert!(!enabled.contains(builtin));
+            assert!(disabled.contains(builtin));
+
+            // enable the builtin
+            enable(&[builtin]).unwrap();
+            let (enabled, disabled) = shell_builtins();
+            assert!(enabled.contains(builtin));
+            assert!(!disabled.contains(builtin));
         }
     }
 }

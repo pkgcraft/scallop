@@ -27,6 +27,8 @@ impl ParseCallbacks for BashCallback {
             "this_command_name" => Some("CURRENT_COMMAND".into()),
             "temporary_env" => Some("TEMPORARY_ENV".into()),
             "ifs_value" => Some("IFS".into()),
+            "shell_builtins" => Some("SHELL_BUILTINS".into()),
+            "num_shell_builtins" => Some("NUM_SHELL_BUILTINS".into()),
             _ => None,
         }
     }
@@ -178,6 +180,8 @@ fn main() {
         .allowlist_var("STATIC_BUILTIN")
         .allowlist_var("ASSIGNMENT_BUILTIN")
         .allowlist_var("LOCALVAR_BUILTIN")
+        .allowlist_var("num_shell_builtins")
+        .allowlist_var("shell_builtins")
         // invalidate built crate whenever any included header file changes
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // mangle type names to expected values
