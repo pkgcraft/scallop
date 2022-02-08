@@ -35,20 +35,30 @@ pub fn find(name: &str) -> Option<Function> {
     func.map(|f| Function { name, func: f })
 }
 
+/// Run a function in bash function scope.
+pub fn bash_func<F: FnOnce()>(name: &str, func: F) {
+    let func_name = CString::new(name).unwrap();
+    unsafe { bash::push_context(func_name.as_ptr() as *mut _, 0, bash::TEMPORARY_ENV) };
+    func();
+    unsafe { bash::pop_context() };
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::variables::string_value;
-    use crate::{functions, source, Shell};
+    use super::*;
+    use crate::builtins::local;
+    use crate::variables::{bind, string_value};
+    use crate::{source, Shell};
 
     use rusty_fork::rusty_fork_test;
 
     rusty_fork_test! {
         #[test]
-        fn find() {
+        fn test_find() {
             let _sh = Shell::new("sh", None);
-            assert!(functions::find("foo").is_none());
+            assert!(find("foo").is_none());
             source::string("foo() { :; }").unwrap();
-            assert!(functions::find("foo").is_some());
+            assert!(find("foo").is_some());
         }
 
         #[test]
@@ -56,11 +66,22 @@ mod tests {
             let _sh = Shell::new("sh", None);
             assert_eq!(string_value("VAR"), None);
             source::string("foo() { VAR=$1; }").unwrap();
-            let mut func = functions::find("foo").unwrap();
+            let mut func = find("foo").unwrap();
             func.execute(&[]).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "");
             func.execute(&["1"]).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "1");
+        }
+
+        #[test]
+        fn test_bash_func() {
+            let _sh = Shell::new("sh", None);
+            bind("VAR", "outer", None, None).unwrap();
+            bash_func("func_name", || {
+                local(&["VAR=inner"]).unwrap();
+                assert_eq!(string_value("VAR").unwrap(), "inner");
+            });
+            assert_eq!(string_value("VAR").unwrap(), "outer");
         }
     }
 }

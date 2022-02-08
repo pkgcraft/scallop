@@ -1,6 +1,5 @@
 use std::ffi::{CStr, CString};
-use std::os::raw::c_char;
-use std::{ptr, slice};
+use std::slice;
 
 use bitflags::bitflags;
 
@@ -45,24 +44,6 @@ bitflags! {
         const NOLONGJMP = bash::ASS_NOLONGJMP;
         const NOINVIS = bash::ASS_NOINVIS;
     }
-}
-
-/// Run the `local` builtin with the given arguments.
-pub fn local(assign: &[&str]) -> Result<()> {
-    let arg_strs: Vec<CString> = assign.iter().map(|s| CString::new(*s).unwrap()).collect();
-    let mut arg_ptrs: Vec<*mut c_char> = arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
-    arg_ptrs.push(ptr::null_mut());
-    let args = arg_ptrs.as_ptr() as *mut _;
-
-    unsafe {
-        // TODO: add better support for converting string vectors/iterators to WordLists
-        let words = bash::strvec_to_word_list(args, 0, 0);
-        cmd_scope("local", || {
-            bash::local_builtin(words);
-        });
-    }
-
-    ok_or_error()
 }
 
 pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
@@ -290,22 +271,6 @@ pub fn var_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
     }
 }
 
-/// Run a function in bash function scope.
-pub fn bash_func<F: FnOnce()>(name: &str, func: F) {
-    let func_name = CString::new(name).unwrap();
-    unsafe { bash::push_context(func_name.as_ptr() as *mut _, 0, bash::TEMPORARY_ENV) };
-    func();
-    unsafe { bash::pop_context() };
-}
-
-/// Run a function under a named bash command scope.
-pub(crate) fn cmd_scope<F: FnOnce()>(name: &str, func: F) {
-    let name = CString::new(name).unwrap();
-    unsafe { bash::CURRENT_COMMAND = name.as_ptr() as *mut _ };
-    func();
-    unsafe { bash::CURRENT_COMMAND = ptr::null_mut() };
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -366,17 +331,6 @@ mod tests {
                 var.bind("inner", None, None).unwrap();
                 assert_eq!(var.string_value().unwrap(), "inner");
             }
-            assert_eq!(string_value("VAR").unwrap(), "outer");
-        }
-
-        #[test]
-        fn test_bash_func() {
-            let _sh = Shell::new("sh", None);
-            bind("VAR", "outer", None, None).unwrap();
-            bash_func("func_name", || {
-                local(&["VAR=inner"]).unwrap();
-                assert_eq!(string_value("VAR").unwrap(), "inner");
-            });
             assert_eq!(string_value("VAR").unwrap(), "outer");
         }
     }

@@ -91,3 +91,11 @@ pub fn current<'a>() -> Option<&'a str> {
     let cmd_ptr = unsafe { bash::CURRENT_COMMAND.as_ref() };
     cmd_ptr.map(|s| unsafe { CStr::from_ptr(s).to_str().unwrap() })
 }
+
+/// Run a function under a named bash command scope.
+pub(crate) fn cmd_scope<F: FnOnce()>(name: &str, func: F) {
+    let name = CString::new(name).unwrap();
+    unsafe { bash::CURRENT_COMMAND = name.as_ptr() as *mut _ };
+    func();
+    unsafe { bash::CURRENT_COMMAND = ptr::null_mut() };
+}

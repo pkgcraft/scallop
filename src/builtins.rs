@@ -12,8 +12,12 @@ use once_cell::sync::Lazy;
 use crate::traits::IntoVec;
 use crate::{bash, command, Error, Result};
 
+pub mod _bash;
 pub mod command_not_found_handle;
 pub mod profile;
+
+// export native bash builtins
+pub use _bash::*;
 
 pub type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
 
