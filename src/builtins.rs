@@ -192,7 +192,7 @@ impl Drop for ScopedBuiltins {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScopedOptions {
     set: Vec<String>,
     unset: Vec<String>,
@@ -200,7 +200,14 @@ pub struct ScopedOptions {
 
 /// Enable/disable shell options, automatically reverting their status when leaving scope.
 impl ScopedOptions {
-    pub fn new<S: AsRef<str>>(options: (&[S], &[S])) -> Result<Self> {
+    pub fn new() -> Self {
+        ScopedOptions {
+            set: vec![],
+            unset: vec![],
+        }
+    }
+
+    pub fn toggle<S: AsRef<str>>(mut self, options: (&[S], &[S])) -> Result<Self> {
         let enabled = bash::shell_opts();
         let (set, unset) = options;
         let set: Vec<String> = set
@@ -213,13 +220,18 @@ impl ScopedOptions {
             .map(|s| s.as_ref().to_string())
             .filter(|s| enabled.contains(s))
             .collect();
+
         if !set.is_empty() {
             shopt(&[&["-s".to_string()], set.as_slice()].concat())?;
+            self.set.extend(set);
         }
+
         if !unset.is_empty() {
             shopt(&[&["-u".to_string()], unset.as_slice()].concat())?;
+            self.unset.extend(unset);
         }
-        Ok(ScopedOptions { set, unset })
+
+        Ok(self)
     }
 }
 
@@ -363,13 +375,34 @@ mod tests {
         fn scoped_options() {
             let _sh = Shell::new("sh", None);
             let (set, unset) = ("autocd", "sourcepath");
+
             assert!(!bash::shell_opts().contains(set));
             assert!(bash::shell_opts().contains(unset));
             {
-                let _opts = ScopedOptions::new((&[set], &[unset]));
+                let _opts = ScopedOptions::new().toggle((&[set], &[unset])).unwrap();
                 assert!(bash::shell_opts().contains(set));
                 assert!(!bash::shell_opts().contains(unset));
             }
+            assert!(!bash::shell_opts().contains(set));
+            assert!(bash::shell_opts().contains(unset));
+
+            // toggle options in separate scope from ScopedOptions creation
+            {
+                let mut _opts = ScopedOptions::new();
+                // options aren't toggled
+                assert!(!bash::shell_opts().contains(set));
+                assert!(bash::shell_opts().contains(unset));
+                {
+                    _opts = _opts.toggle((&[set], &[unset])).unwrap();
+                    // options are toggled
+                    assert!(bash::shell_opts().contains(set));
+                    assert!(!bash::shell_opts().contains(unset));
+                }
+                // options are still toggled
+                assert!(bash::shell_opts().contains(set));
+                assert!(!bash::shell_opts().contains(unset));
+            }
+            // options have been reverted
             assert!(!bash::shell_opts().contains(set));
             assert!(bash::shell_opts().contains(unset));
         }
