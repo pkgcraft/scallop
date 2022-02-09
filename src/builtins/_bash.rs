@@ -2,12 +2,13 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::ptr;
 
+use crate::builtins::ExecStatus;
 use crate::command::cmd_scope;
 use crate::error::ok_or_error;
 use crate::{bash, Result};
 
 /// Run the `local` builtin with the given arguments.
-pub fn local<S: AsRef<str>>(assign: &[S]) -> Result<()> {
+pub fn local<S: AsRef<str>>(assign: &[S]) -> Result<ExecStatus> {
     let arg_strs: Vec<CString> = assign
         .iter()
         .map(|s| CString::new(s.as_ref()).unwrap())
@@ -28,7 +29,7 @@ pub fn local<S: AsRef<str>>(assign: &[S]) -> Result<()> {
 }
 
 /// Run the `shopt` builtin with the given arguments.
-pub fn shopt<S: AsRef<str>>(assign: &[S]) -> Result<()> {
+pub fn shopt<S: AsRef<str>>(assign: &[S]) -> Result<ExecStatus> {
     let arg_strs: Vec<CString> = assign
         .iter()
         .map(|s| CString::new(s.as_ref()).unwrap())

@@ -4,6 +4,8 @@ use std::os::raw::c_char;
 
 use tracing::warn;
 
+use crate::builtins::ExecStatus;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, thiserror::Error)]
@@ -33,11 +35,11 @@ pub fn last_error() -> Option<Error> {
     LAST_ERROR.with(|prev| prev.borrow_mut().take())
 }
 
-/// Return the most recent error if one exists, otherwise Ok(()).
+/// Return the most recent error if one exists, otherwise Ok(ExecStatus::Success).
 #[inline]
-pub fn ok_or_error() -> Result<()> {
+pub fn ok_or_error() -> Result<ExecStatus> {
     match last_error() {
-        None => Ok(()),
+        None => Ok(ExecStatus::Success),
         Some(e) => Err(e),
     }
 }

@@ -2,6 +2,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::ptr;
 
+use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
 use crate::{bash, Result};
 
@@ -13,7 +14,7 @@ pub struct Function<'a> {
 
 impl Function<'_> {
     /// Execute a given shell function.
-    pub fn execute(&mut self, args: &[&str]) -> Result<()> {
+    pub fn execute(&mut self, args: &[&str]) -> Result<ExecStatus> {
         let args = [&[self.name.as_str()], args].concat();
         let arg_strs: Vec<CString> = args.iter().map(|s| CString::new(*s).unwrap()).collect();
         let mut arg_ptrs: Vec<*mut c_char> =

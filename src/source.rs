@@ -4,6 +4,7 @@ use std::path::Path;
 use bitflags::bitflags;
 use once_cell::sync::Lazy;
 
+use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
 use crate::{bash, Result};
 
@@ -26,7 +27,7 @@ bitflags! {
 
 static FILE_STR: Lazy<CString> = Lazy::new(|| CString::new("scallop::source::string").unwrap());
 
-pub fn string<S: AsRef<str>>(s: S) -> Result<()> {
+pub fn string<S: AsRef<str>>(s: S) -> Result<ExecStatus> {
     let file_ptr = FILE_STR.as_ptr();
     let s = s.as_ref();
     let c_str = CString::new(s).unwrap();
@@ -39,7 +40,7 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<()> {
     ok_or_error()
 }
 
-pub fn file<P: AsRef<Path>>(path: P) -> Result<()> {
+pub fn file<P: AsRef<Path>>(path: P) -> Result<ExecStatus> {
     let path = path.as_ref();
     let c_str = CString::new(path.to_str().unwrap()).unwrap();
     let str_ptr = c_str.as_ptr();

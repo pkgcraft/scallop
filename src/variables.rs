@@ -3,6 +3,7 @@ use std::slice;
 
 use bitflags::bitflags;
 
+use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
 use crate::traits::IntoVec;
 use crate::{bash, Error, Result};
@@ -46,7 +47,7 @@ bitflags! {
     }
 }
 
-pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
+pub fn unbind<S: AsRef<str>>(name: S) -> Result<ExecStatus> {
     let name = name.as_ref();
     let cstr = CString::new(name).unwrap();
     unsafe {
@@ -55,7 +56,12 @@ pub fn unbind<S: AsRef<str>>(name: S) -> Result<()> {
     ok_or_error()
 }
 
-pub fn bind<S1, S2>(name: S1, value: S2, flags: Option<Assign>, attrs: Option<Attr>) -> Result<()>
+pub fn bind<S1, S2>(
+    name: S1,
+    value: S2,
+    flags: Option<Assign>,
+    attrs: Option<Attr>,
+) -> Result<ExecStatus>
 where
     S1: AsRef<str>,
     S2: AsRef<str>,
@@ -78,7 +84,7 @@ pub fn bind_global<S: AsRef<str>>(
     value: S,
     flags: Option<Assign>,
     attrs: Option<Attr>,
-) -> Result<()> {
+) -> Result<ExecStatus> {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
@@ -117,7 +123,7 @@ pub trait Variables {
         value: S,
         flags: Option<Assign>,
         attrs: Option<Attr>,
-    ) -> Result<()> {
+    ) -> Result<ExecStatus> {
         bind(self.name(), value.as_ref(), flags, attrs)
     }
 
@@ -127,17 +133,17 @@ pub trait Variables {
         value: S,
         flags: Option<Assign>,
         attrs: Option<Attr>,
-    ) -> Result<()> {
+    ) -> Result<ExecStatus> {
         bind_global(self.name(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    fn unbind(&mut self) -> Result<()> {
+    fn unbind(&mut self) -> Result<ExecStatus> {
         unbind(self.name())
     }
 
     #[inline]
-    fn append(&mut self, s: &str) -> Result<()> {
+    fn append(&mut self, s: &str) -> Result<ExecStatus> {
         self.bind(s, Some(Assign::APPEND), None)
     }
 
@@ -197,7 +203,7 @@ impl Drop for ScopedVariable {
     #[inline]
     fn drop(&mut self) {
         if string_value(&self.var.name) != self.orig {
-            let mut reset = || -> Result<()> {
+            let mut reset = || -> Result<ExecStatus> {
                 if let Some(val) = &self.orig {
                     self.var.bind(val, None, None)
                 } else {

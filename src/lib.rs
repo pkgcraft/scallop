@@ -74,7 +74,7 @@ impl Shell {
     }
 
     #[inline]
-    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<()> {
+    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<builtins::ExecStatus> {
         source::file(path)
     }
 }
