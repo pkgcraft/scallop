@@ -169,6 +169,7 @@ fn main() {
         .allowlist_function("builtin_address_internal")
         .allowlist_var("SEVAL_.*")
         // subst.h
+        .allowlist_function("expand_string_to_string")
         .allowlist_function("list_string")
         .allowlist_var("ifs_value")
         .allowlist_var("ASS_.*")

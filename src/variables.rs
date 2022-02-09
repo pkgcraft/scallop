@@ -118,6 +118,11 @@ pub trait Variables {
     }
 
     #[inline]
+    fn expand(&self) -> Option<String> {
+        self.string_value().and_then(expand)
+    }
+
+    #[inline]
     fn bind<S: AsRef<str>>(
         &mut self,
         value: S,
@@ -219,6 +224,13 @@ impl Drop for ScopedVariable {
 pub fn string_value<S: AsRef<str>>(name: S) -> Option<String> {
     let name = CString::new(name.as_ref()).unwrap();
     let ptr = unsafe { bash::get_string_value(name.as_ptr()).as_ref() };
+    ptr.map(|s| unsafe { String::from(CStr::from_ptr(s).to_str().unwrap()) })
+}
+
+/// Get the expanded value of a given string.
+pub fn expand<S: AsRef<str>>(name: S) -> Option<String> {
+    let name = CString::new(name.as_ref()).unwrap();
+    let ptr = unsafe { bash::expand_string_to_string(name.as_ptr() as *mut _, 0).as_ref() };
     ptr.map(|s| unsafe { String::from(CStr::from_ptr(s).to_str().unwrap()) })
 }
 
@@ -325,6 +337,17 @@ mod tests {
             assert_eq!(var.string_value().unwrap(), "12 3");
             var.unbind().unwrap();
             assert_eq!(var.string_value(), None);
+        }
+
+        #[test]
+        fn test_expand() {
+            let _sh = Shell::new("sh", None);
+            let mut var1 = Variable::new("VAR1");
+            let mut var2 = Variable::new("VAR2");
+            var1.bind("1", None, None).unwrap();
+            var2.bind("${VAR1}", None, None).unwrap();
+            assert_eq!(var2.expand().unwrap(), "1");
+            assert_eq!(expand("$VAR1").unwrap(), "1");
         }
 
         #[test]
