@@ -3,6 +3,7 @@ use std::ffi::{CStr, CString};
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_int};
+use std::process::ExitStatus;
 use std::sync::RwLock;
 use std::{mem, ptr};
 
@@ -310,6 +311,15 @@ impl From<&ExecStatus> for bool {
 impl From<bool> for ExecStatus {
     fn from(value: bool) -> ExecStatus {
         match value {
+            true => ExecStatus::Success,
+            false => ExecStatus::Failure,
+        }
+    }
+}
+
+impl From<ExitStatus> for ExecStatus {
+    fn from(status: ExitStatus) -> ExecStatus {
+        match status.success() {
             true => ExecStatus::Success,
             false => ExecStatus::Failure,
         }
