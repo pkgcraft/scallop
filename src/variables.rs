@@ -347,7 +347,7 @@ mod tests {
             var1.bind("1", None, None).unwrap();
             var2.bind("${VAR1}", None, None).unwrap();
             assert_eq!(var2.expand().unwrap(), "1");
-            assert_eq!(expand("$VAR1").unwrap(), "1");
+            assert_eq!(expand("${VAR3:-3}").unwrap(), "3");
         }
 
         #[test]
