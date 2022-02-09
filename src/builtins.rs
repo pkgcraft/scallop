@@ -170,7 +170,7 @@ pub struct ScopedBuiltins {
     disabled: Vec<String>,
 }
 
-/// Builtins that will automatically disabled when leaving scope.
+/// Enable/disable builtins, automatically reverting their status when leaving scope.
 impl ScopedBuiltins {
     pub fn new<S: AsRef<str>>(builtins: (&[S], &[S])) -> Result<Self> {
         let (add, sub) = builtins;
@@ -188,6 +188,50 @@ impl Drop for ScopedBuiltins {
         }
         if !self.disabled.is_empty() {
             enable(&self.disabled).unwrap_or_else(|_| panic!("failed enabling builtins"));
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ScopedOptions {
+    set: Vec<String>,
+    unset: Vec<String>,
+}
+
+/// Enable/disable shell options, automatically reverting their status when leaving scope.
+impl ScopedOptions {
+    pub fn new<S: AsRef<str>>(options: (&[S], &[S])) -> Result<Self> {
+        let enabled = bash::shell_opts();
+        let (set, unset) = options;
+        let set: Vec<String> = set
+            .iter()
+            .map(|s| s.as_ref().to_string())
+            .filter(|s| !enabled.contains(s))
+            .collect();
+        let unset: Vec<String> = unset
+            .iter()
+            .map(|s| s.as_ref().to_string())
+            .filter(|s| enabled.contains(s))
+            .collect();
+        if !set.is_empty() {
+            shopt(&[&["-s".to_string()], set.as_slice()].concat())?;
+        }
+        if !unset.is_empty() {
+            shopt(&[&["-u".to_string()], unset.as_slice()].concat())?;
+        }
+        Ok(ScopedOptions { set, unset })
+    }
+}
+
+impl Drop for ScopedOptions {
+    fn drop(&mut self) {
+        if !self.set.is_empty() {
+            shopt(&[&["-u".to_string()], self.set.as_slice()].concat())
+                .expect("failed unsetting options");
+        }
+        if !self.unset.is_empty() {
+            shopt(&[&["-s".to_string()], self.unset.as_slice()].concat())
+                .expect("failed setting options");
         }
     }
 }
@@ -313,6 +357,21 @@ mod tests {
             let (enabled, disabled) = shell_builtins();
             assert!(enabled.contains(builtin));
             assert!(!disabled.contains(builtin));
+        }
+
+        #[test]
+        fn scoped_options() {
+            let _sh = Shell::new("sh", None);
+            let (set, unset) = ("autocd", "sourcepath");
+            assert!(!bash::shell_opts().contains(set));
+            assert!(bash::shell_opts().contains(unset));
+            {
+                let _opts = ScopedOptions::new((&[set], &[unset]));
+                assert!(bash::shell_opts().contains(set));
+                assert!(!bash::shell_opts().contains(unset));
+            }
+            assert!(!bash::shell_opts().contains(set));
+            assert!(bash::shell_opts().contains(unset));
         }
     }
 }
