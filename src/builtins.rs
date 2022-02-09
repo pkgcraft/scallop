@@ -207,7 +207,7 @@ impl ScopedOptions {
         }
     }
 
-    pub fn toggle<S: AsRef<str>>(mut self, options: (&[S], &[S])) -> Result<Self> {
+    pub fn toggle<S: AsRef<str>>(&mut self, options: (&[S], &[S])) -> Result<()> {
         let enabled = bash::shell_opts();
         let (set, unset) = options;
         let set: Vec<String> = set
@@ -231,7 +231,7 @@ impl ScopedOptions {
             self.unset.extend(unset);
         }
 
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -379,7 +379,8 @@ mod tests {
             assert!(!bash::shell_opts().contains(set));
             assert!(bash::shell_opts().contains(unset));
             {
-                let _opts = ScopedOptions::new().toggle((&[set], &[unset])).unwrap();
+                let mut opts = ScopedOptions::new();
+                opts.toggle((&[set], &[unset])).unwrap();
                 assert!(bash::shell_opts().contains(set));
                 assert!(!bash::shell_opts().contains(unset));
             }
@@ -388,12 +389,12 @@ mod tests {
 
             // toggle options in separate scope from ScopedOptions creation
             {
-                let mut _opts = ScopedOptions::new();
+                let mut opts = ScopedOptions::new();
                 // options aren't toggled
                 assert!(!bash::shell_opts().contains(set));
                 assert!(bash::shell_opts().contains(unset));
                 {
-                    _opts = _opts.toggle((&[set], &[unset])).unwrap();
+                    opts.toggle((&[set], &[unset])).unwrap();
                     // options are toggled
                     assert!(bash::shell_opts().contains(set));
                     assert!(!bash::shell_opts().contains(unset));
