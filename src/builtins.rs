@@ -202,10 +202,7 @@ pub struct ScopedOptions {
 /// Enable/disable shell options, automatically reverting their status when leaving scope.
 impl ScopedOptions {
     pub fn new() -> Self {
-        ScopedOptions {
-            set: vec![],
-            unset: vec![],
-        }
+        ScopedOptions::default()
     }
 
     pub fn toggle<S: AsRef<str>>(&mut self, options: (&[S], &[S])) -> Result<()> {
