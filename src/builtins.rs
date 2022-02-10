@@ -223,12 +223,12 @@ impl ScopedOptions {
             .collect();
 
         if !set.is_empty() {
-            shopt(&[&["-s".to_string()], set.as_slice()].concat())?;
+            shopt(&["-s"], &set)?;
             self.set.extend(set);
         }
 
         if !unset.is_empty() {
-            shopt(&[&["-u".to_string()], unset.as_slice()].concat())?;
+            shopt(&["-u"], &unset)?;
             self.unset.extend(unset);
         }
 
@@ -239,12 +239,10 @@ impl ScopedOptions {
 impl Drop for ScopedOptions {
     fn drop(&mut self) {
         if !self.set.is_empty() {
-            shopt(&[&["-u".to_string()], self.set.as_slice()].concat())
-                .expect("failed unsetting options");
+            shopt(&["-u"], &self.set).expect("failed unsetting options");
         }
         if !self.unset.is_empty() {
-            shopt(&[&["-s".to_string()], self.unset.as_slice()].concat())
-                .expect("failed setting options");
+            shopt(&["-s"], &self.unset).expect("failed setting options");
         }
     }
 }

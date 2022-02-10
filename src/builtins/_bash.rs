@@ -8,8 +8,8 @@ use crate::error::ok_or_error;
 use crate::{bash, Result};
 
 /// Run the `local` builtin with the given arguments.
-pub fn local<S: AsRef<str>>(assign: &[S]) -> Result<ExecStatus> {
-    let arg_strs: Vec<CString> = assign
+pub fn local<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
+    let arg_strs: Vec<CString> = args
         .iter()
         .map(|s| CString::new(s.as_ref()).unwrap())
         .collect();
@@ -29,11 +29,10 @@ pub fn local<S: AsRef<str>>(assign: &[S]) -> Result<ExecStatus> {
 }
 
 /// Run the `shopt` builtin with the given arguments.
-pub fn shopt<S: AsRef<str>>(assign: &[S]) -> Result<ExecStatus> {
-    let arg_strs: Vec<CString> = assign
-        .iter()
-        .map(|s| CString::new(s.as_ref()).unwrap())
-        .collect();
+pub fn shopt<S1: AsRef<str>, S2: AsRef<str>>(opts: &[S1], args: &[S2]) -> Result<ExecStatus> {
+    let mut arg_strs = Vec::<CString>::new();
+    arg_strs.extend(opts.iter().map(|s| CString::new(s.as_ref()).unwrap()));
+    arg_strs.extend(args.iter().map(|s| CString::new(s.as_ref()).unwrap()));
     let mut arg_ptrs: Vec<*mut c_char> = arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
     arg_ptrs.push(ptr::null_mut());
     let args = arg_ptrs.as_ptr() as *mut _;
