@@ -228,9 +228,9 @@ pub fn string_value<S: AsRef<str>>(name: S) -> Option<String> {
 }
 
 /// Get the expanded value of a given string.
-pub fn expand<S: AsRef<str>>(name: S) -> Option<String> {
-    let name = CString::new(name.as_ref()).unwrap();
-    let ptr = unsafe { bash::expand_string_to_string(name.as_ptr() as *mut _, 0).as_ref() };
+pub fn expand<S: AsRef<str>>(val: S) -> Option<String> {
+    let val = CString::new(val.as_ref()).unwrap();
+    let ptr = unsafe { bash::expand_string_to_string(val.as_ptr() as *mut _, 0).as_ref() };
     ptr.map(|s| unsafe { String::from(CStr::from_ptr(s).to_str().unwrap()) })
 }
 
