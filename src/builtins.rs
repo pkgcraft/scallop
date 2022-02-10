@@ -205,30 +205,26 @@ impl ScopedOptions {
         ScopedOptions::default()
     }
 
-    pub fn toggle<S: AsRef<str>>(&mut self, options: (&[S], &[S])) -> Result<()> {
+    pub fn toggle<S: AsRef<str>>(&mut self, set: &[S], unset: &[S]) -> Result<()> {
         let enabled = bash::shell_opts();
-        let (set, unset) = options;
-        let set: Vec<String> = set
-            .iter()
-            .map(|s| s.as_ref().to_string())
-            .filter(|s| !enabled.contains(s))
-            .collect();
-        let unset: Vec<String> = unset
-            .iter()
-            .map(|s| s.as_ref().to_string())
-            .filter(|s| enabled.contains(s))
-            .collect();
-
         if !set.is_empty() {
+            let set: Vec<String> = set
+                .iter()
+                .map(|s| s.as_ref().to_string())
+                .filter(|s| !enabled.contains(s))
+                .collect();
             shopt(&["-s"], &set)?;
             self.set.extend(set);
         }
-
         if !unset.is_empty() {
+            let unset: Vec<String> = unset
+                .iter()
+                .map(|s| s.as_ref().to_string())
+                .filter(|s| enabled.contains(s))
+                .collect();
             shopt(&["-u"], &unset)?;
             self.unset.extend(unset);
         }
-
         Ok(())
     }
 }
@@ -385,7 +381,7 @@ mod tests {
             assert!(bash::shell_opts().contains(unset));
             {
                 let mut opts = ScopedOptions::new();
-                opts.toggle((&[set], &[unset])).unwrap();
+                opts.toggle(&[set], &[unset]).unwrap();
                 assert!(bash::shell_opts().contains(set));
                 assert!(!bash::shell_opts().contains(unset));
             }
@@ -399,7 +395,7 @@ mod tests {
                 assert!(!bash::shell_opts().contains(set));
                 assert!(bash::shell_opts().contains(unset));
                 {
-                    opts.toggle((&[set], &[unset])).unwrap();
+                    opts.toggle(&[set], &[unset]).unwrap();
                     // options are toggled
                     assert!(bash::shell_opts().contains(set));
                     assert!(!bash::shell_opts().contains(unset));
