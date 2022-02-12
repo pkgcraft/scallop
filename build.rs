@@ -62,8 +62,7 @@ fn main() {
             .without("bash-malloc", None)
             .disable("mem-scramble", None)
             .disable("net-redirections", None)
-            .disable("restricted", None)
-            .disable("job-control", None);
+            .disable("restricted", None);
 
         if !cfg!(feature = "nls") {
             bash.disable("nls", None);
