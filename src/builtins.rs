@@ -294,10 +294,7 @@ impl From<ExecStatus> for i32 {
 
 impl From<&ExecStatus> for bool {
     fn from(exec: &ExecStatus) -> bool {
-        match exec {
-            ExecStatus::Success => true,
-            _ => false,
-        }
+        matches!(exec, ExecStatus::Success)
     }
 }
 
