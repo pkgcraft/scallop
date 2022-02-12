@@ -133,8 +133,10 @@ fn main() {
         .allowlist_function("execute_shell_function")
         // shell.h
         .allowlist_function("bash_main")
+        .allowlist_function("lib_error_handlers")
         .allowlist_function("lib_init")
         .allowlist_function("lib_reset")
+        .allowlist_function("set_shell_name")
         .allowlist_var("shell_name")
         .allowlist_var("EXECUTION_FAILURE")
         .allowlist_var("EXECUTION_SUCCESS")

@@ -1,4 +1,5 @@
-use scallop::{builtins, Shell};
+use scallop::builtins;
+use scallop::shell::Shell;
 
 fn main() {
     let internal_builtins = vec![
