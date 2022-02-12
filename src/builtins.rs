@@ -279,6 +279,7 @@ where
 pub enum ExecStatus {
     Success,
     Failure,
+    Error,
 }
 
 impl From<ExecStatus> for i32 {
@@ -286,6 +287,7 @@ impl From<ExecStatus> for i32 {
         match exec {
             ExecStatus::Success => bash::EXECUTION_SUCCESS as i32,
             ExecStatus::Failure => bash::EXECUTION_FAILURE as i32,
+            ExecStatus::Error => bash::EX_LONGJMP as i32,
         }
     }
 }
@@ -294,7 +296,7 @@ impl From<&ExecStatus> for bool {
     fn from(exec: &ExecStatus) -> bool {
         match exec {
             ExecStatus::Success => true,
-            ExecStatus::Failure => false,
+            _ => false,
         }
     }
 }
@@ -330,13 +332,13 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     let args = list.into_vec();
 
     match builtin.run(args.as_slice()) {
-        Ok(ret) => ret as i32,
+        Ok(ret) => i32::from(ret),
         Err(e) => {
             match e {
                 Error::Builtin(_) => eprintln!("{}: error: {}", cmd, e),
                 _ => eprintln!("{}", e),
             }
-            ExecStatus::Failure as i32
+            i32::from(ExecStatus::Failure)
         }
     }
 }
