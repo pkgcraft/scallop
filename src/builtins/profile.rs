@@ -38,10 +38,7 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     }
     let elapsed = start.elapsed().expect("failed getting elapsed time");
     let per_loop = elapsed / loops;
-    eprintln!(
-        "elapsed {:?}, loops: {}, per loop: {:?}",
-        elapsed, loops, per_loop
-    );
+    eprintln!("elapsed {:?}, loops: {}, per loop: {:?}", elapsed, loops, per_loop);
 
     Ok(ExecStatus::Success)
 }

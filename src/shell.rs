@@ -135,22 +135,13 @@ static SHM: Lazy<Shm> = Lazy::new(Default::default);
 pub fn error<S: AsRef<str>>(err: S) -> Result<()> {
     let err = err.as_ref();
     if err.len() > SHM.size - 1 {
-        return Err(Error::Base(format!(
-            "error message larger than {} bytes",
-            SHM.size - 1,
-        )));
+        return Err(Error::Base(format!("error message larger than {} bytes", SHM.size - 1,)));
     }
 
     unsafe {
-        let ptr = mmap(
-            ptr::null_mut(),
-            SHM.size,
-            ProtFlags::PROT_WRITE,
-            MapFlags::MAP_SHARED,
-            SHM.fd,
-            0,
-        )
-        .map_err(|e| Error::Base(format!("failed mmap shared memory: {}", e)))?;
+        let ptr =
+            mmap(ptr::null_mut(), SHM.size, ProtFlags::PROT_WRITE, MapFlags::MAP_SHARED, SHM.fd, 0)
+                .map_err(|e| Error::Base(format!("failed mmap shared memory: {}", e)))?;
         let data = CString::new(err).unwrap();
         snprintf(ptr as *mut _, SHM.size, data.as_ptr());
         msync(ptr as *mut _, SHM.size, MsFlags::MS_SYNC)

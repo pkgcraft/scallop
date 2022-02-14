@@ -124,10 +124,7 @@ fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<Stri
 
     match unknown.is_empty() {
         true => Ok(toggled),
-        false => Err(Error::Base(format!(
-            "unknown builtins: {}",
-            unknown.join(", ")
-        ))),
+        false => Err(Error::Base(format!("unknown builtins: {}", unknown.join(", ")))),
     }
 }
 
