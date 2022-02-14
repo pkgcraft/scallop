@@ -1,10 +1,21 @@
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
+use std::os::unix::io::RawFd;
 use std::path::Path;
 use std::{env, mem, process, ptr};
 
-use crate::{bash, builtins, error, source, Result};
+use nix::{
+    fcntl::OFlag,
+    libc::snprintf,
+    sys::mman::{mmap, msync, shm_open, shm_unlink, MapFlags, MsFlags, ProtFlags},
+    sys::{signal, stat::Mode},
+    unistd::{ftruncate, getpid, Pid},
+};
+use once_cell::sync::Lazy;
 
+use crate::{bash, builtins, error, source, Error, Result};
+
+#[derive(Debug)]
 pub struct Shell {
     _name: CString,
 }
@@ -24,6 +35,10 @@ impl Shell {
             bash::lib_init();
         }
 
+        // forcibly create shm file and store global pid
+        Lazy::force(&PID);
+        Lazy::force(&SHM);
+
         Shell { _name: name }
     }
 
@@ -31,6 +46,11 @@ impl Shell {
     #[inline]
     pub fn reset(&self) {
         unsafe { bash::lib_reset() };
+    }
+
+    /// Return the main process value.
+    pub fn pid(&self) -> &'static Pid {
+        &PID
     }
 
     /// Start an interactive shell session.
@@ -69,10 +89,75 @@ impl Shell {
 }
 
 impl Drop for Shell {
-    #[inline]
     fn drop(&mut self) {
-        self.reset()
+        if !is_subshell() {
+            self.reset();
+            // ignore unlinking errors
+            let _ = shm_unlink(SHM.name.as_str());
+        }
     }
+}
+
+static PID: Lazy<Pid> = Lazy::new(getpid);
+
+/// Returns true if currently operating in a subshell, false otherwise.
+pub fn is_subshell() -> bool {
+    *PID != getpid()
+}
+
+/// Send a signal to the main bash process.
+pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
+    signal::kill(*PID, signal.into()).map_err(|e| Error::Base(e.to_string()))
+}
+
+#[derive(Debug)]
+struct Shm {
+    name: String,
+    size: usize,
+    fd: RawFd,
+}
+
+impl Default for Shm {
+    fn default() -> Self {
+        let name = format!("/scallop-{}", *PID);
+        let size: usize = 4096;
+        let flag = OFlag::O_CREAT | OFlag::O_TRUNC | OFlag::O_RDWR;
+        let mode = Mode::S_IWUSR | Mode::S_IRUSR;
+        let fd = shm_open(name.as_str(), flag, mode).expect("failed opening shared memory");
+        ftruncate(fd, size as i64).expect("failed truncating shared memory");
+        Shm { name, size, fd }
+    }
+}
+
+static SHM: Lazy<Shm> = Lazy::new(Default::default);
+
+/// Inject an error into bash.
+pub fn error<S: AsRef<str>>(err: S) -> Result<()> {
+    let err = err.as_ref();
+    if err.len() > SHM.size - 1 {
+        return Err(Error::Base(format!(
+            "error message larger than {} bytes",
+            SHM.size - 1,
+        )));
+    }
+
+    unsafe {
+        let ptr = mmap(
+            ptr::null_mut(),
+            SHM.size,
+            ProtFlags::PROT_WRITE,
+            MapFlags::MAP_SHARED,
+            SHM.fd,
+            0,
+        )
+        .map_err(|e| Error::Base(format!("failed mmap shared memory: {}", e)))?;
+        let data = CString::new(err).unwrap();
+        snprintf(ptr as *mut _, SHM.size, data.as_ptr());
+        msync(ptr as *mut _, SHM.size, MsFlags::MS_SYNC)
+            .map_err(|e| Error::Base(format!("failed msync shared memory: {}", e)))?;
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
