@@ -6,14 +6,12 @@ use std::{env, mem, process, ptr};
 
 use nix::{
     fcntl::OFlag,
-    libc::snprintf,
-    sys::mman::{mmap, msync, shm_open, shm_unlink, MapFlags, MsFlags, ProtFlags},
+    sys::mman::{shm_open, shm_unlink},
     sys::{signal, stat::Mode},
     unistd::{ftruncate, getpid, Pid},
 };
 use once_cell::sync::Lazy;
 
-use crate::builtins::ExecStatus;
 use crate::{bash, builtins, error, source, Error, Result};
 
 #[derive(Debug)]
@@ -84,7 +82,7 @@ impl Shell {
     }
 
     #[inline]
-    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<ExecStatus> {
+    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<builtins::ExecStatus> {
         source::file(path)
     }
 }
@@ -112,9 +110,9 @@ pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
 }
 
 #[derive(Debug)]
-struct Shm {
-    size: usize,
-    fd: RawFd,
+pub(crate) struct Shm {
+    pub(crate) size: usize,
+    pub(crate) fd: RawFd,
 }
 
 impl Default for Shm {
@@ -129,34 +127,7 @@ impl Default for Shm {
 }
 
 static SHM_NAME: Lazy<String> = Lazy::new(|| format!("/scallop-{}", *PID));
-static SHM: Lazy<Shm> = Lazy::new(Default::default);
-
-/// Raise an error and reset the current bash process.
-pub fn error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
-    let err = err.as_ref();
-    if err.len() > SHM.size - 1 {
-        return Err(Error::Base(format!("error message larger than {} bytes", SHM.size - 1,)));
-    }
-
-    unsafe {
-        let ptr =
-            mmap(ptr::null_mut(), SHM.size, ProtFlags::PROT_WRITE, MapFlags::MAP_SHARED, SHM.fd, 0)
-                .map_err(|e| Error::Base(format!("failed mmap shared memory: {}", e)))?;
-        let data = CString::new(err).unwrap();
-        snprintf(ptr as *mut _, SHM.size, data.as_ptr());
-        msync(ptr as *mut _, SHM.size, MsFlags::MS_SYNC)
-            .map_err(|e| Error::Base(format!("failed msync shared memory: {}", e)))?;
-    }
-
-    kill(signal::Signal::SIGUSR1)?;
-
-    // TODO: send SIGTERM to background jobs (use jobs builtin)
-    if is_subshell() {
-        process::exit(2);
-    }
-
-    Ok(ExecStatus::Error)
-}
+pub(crate) static SHM: Lazy<Shm> = Lazy::new(Default::default);
 
 #[cfg(test)]
 mod tests {
@@ -167,7 +138,7 @@ mod tests {
 
     rusty_fork_test! {
         #[test]
-        fn reset() {
+        fn test_reset() {
             let sh = Shell::new("sh", None);
             bind("VAR", "1", None, None).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "1");
