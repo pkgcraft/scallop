@@ -13,6 +13,7 @@ use nix::{
 };
 use once_cell::sync::Lazy;
 
+use crate::builtins::ExecStatus;
 use crate::{bash, builtins, error, source, Error, Result};
 
 #[derive(Debug)]
@@ -83,7 +84,7 @@ impl Shell {
     }
 
     #[inline]
-    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<builtins::ExecStatus> {
+    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<ExecStatus> {
         source::file(path)
     }
 }
@@ -130,8 +131,8 @@ impl Default for Shm {
 static SHM_NAME: Lazy<String> = Lazy::new(|| format!("/scallop-{}", *PID));
 static SHM: Lazy<Shm> = Lazy::new(Default::default);
 
-/// Inject an error into bash.
-pub fn error<S: AsRef<str>>(err: S) -> Result<()> {
+/// Raise an error and reset the current bash process.
+pub fn error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
     let err = err.as_ref();
     if err.len() > SHM.size - 1 {
         return Err(Error::Base(format!("error message larger than {} bytes", SHM.size - 1,)));
@@ -147,7 +148,14 @@ pub fn error<S: AsRef<str>>(err: S) -> Result<()> {
             .map_err(|e| Error::Base(format!("failed msync shared memory: {}", e)))?;
     }
 
-    Ok(())
+    kill(signal::Signal::SIGUSR1)?;
+
+    // TODO: send SIGTERM to background jobs (use jobs builtin)
+    if is_subshell() {
+        process::exit(2);
+    }
+
+    Ok(ExecStatus::Error)
 }
 
 #[cfg(test)]
