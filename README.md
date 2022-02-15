@@ -1,8 +1,8 @@
 # scallop
 
-Scallop is a rust-based library and executable that wrap bash. It enables
-writing bash builtins natively in rust and running them in either standard bash
-(with loadable builtin support enabled) or via the scallop executable.
+Scallop is a rust-based library that wraps bash. It supports writing bash
+builtins in rust and interacting with various bash data structures including
+variables, arrays, and functions.
 
 ## Development
 
