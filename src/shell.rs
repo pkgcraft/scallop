@@ -118,10 +118,13 @@ pub(crate) struct Shm {
 impl Default for Shm {
     fn default() -> Self {
         let size: usize = 4096;
+        let name = SHM_NAME.as_str();
         let flag = OFlag::O_CREAT | OFlag::O_TRUNC | OFlag::O_RDWR;
         let mode = Mode::S_IWUSR | Mode::S_IRUSR;
-        let fd = shm_open(SHM_NAME.as_str(), flag, mode).expect("failed opening shared memory");
-        ftruncate(fd, size as i64).expect("failed truncating shared memory");
+        let fd = shm_open(name, flag, mode)
+            .unwrap_or_else(|e| panic!("failed opening shared memory {:?}: {}", name, e));
+        ftruncate(fd, size as i64)
+            .unwrap_or_else(|e| panic!("failed truncating shared memory {:?}: {}", name, e));
         Shm { size, fd }
     }
 }
