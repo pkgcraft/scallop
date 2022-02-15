@@ -1,14 +1,11 @@
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
-use std::os::unix::io::RawFd;
 use std::path::Path;
 use std::{env, mem, process, ptr};
 
 use nix::{
-    fcntl::OFlag,
-    sys::mman::{shm_open, shm_unlink},
-    sys::{signal, stat::Mode},
-    unistd::{ftruncate, getpid, Pid},
+    sys::signal,
+    unistd::{getpid, Pid},
 };
 use once_cell::sync::Lazy;
 
@@ -31,12 +28,13 @@ impl Shell {
         unsafe {
             bash::set_shell_name(name.as_ptr() as *mut _);
             bash::lib_error_handlers(Some(error::bash_error), Some(error::bash_warning));
-            bash::lib_init();
+            if bash::lib_init() != 0 {
+                panic!("failed initializing bash");
+            }
         }
 
-        // force main pid and shm name initialization
+        // force main pid initialization
         Lazy::force(&PID);
-        Lazy::force(&SHM_NAME);
 
         Shell { _name: name }
     }
@@ -91,8 +89,6 @@ impl Drop for Shell {
     fn drop(&mut self) {
         if !is_subshell() {
             self.reset();
-            // ignore unlinking errors
-            let _ = shm_unlink(SHM_NAME.as_str());
         }
     }
 }
@@ -108,29 +104,6 @@ pub fn is_subshell() -> bool {
 pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
     signal::kill(*PID, signal.into()).map_err(|e| Error::Base(e.to_string()))
 }
-
-#[derive(Debug)]
-pub(crate) struct Shm {
-    pub(crate) size: usize,
-    pub(crate) fd: RawFd,
-}
-
-impl Default for Shm {
-    fn default() -> Self {
-        let size: usize = 4096;
-        let name = SHM_NAME.as_str();
-        let flag = OFlag::O_CREAT | OFlag::O_TRUNC | OFlag::O_RDWR;
-        let mode = Mode::S_IWUSR | Mode::S_IRUSR;
-        let fd = shm_open(name, flag, mode)
-            .unwrap_or_else(|e| panic!("failed opening shared memory {:?}: {}", name, e));
-        ftruncate(fd, size as i64)
-            .unwrap_or_else(|e| panic!("failed truncating shared memory {:?}: {}", name, e));
-        Shm { size, fd }
-    }
-}
-
-static SHM_NAME: Lazy<String> = Lazy::new(|| format!("/scallop-{}", *PID));
-pub(crate) static SHM: Lazy<Shm> = Lazy::new(Default::default);
 
 #[cfg(test)]
 mod tests {

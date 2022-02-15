@@ -8,14 +8,10 @@ use std::sync::RwLock;
 use std::{mem, process, ptr};
 
 use bitflags::bitflags;
-use nix::{
-    libc::snprintf,
-    sys::mman::{mmap, msync, MapFlags, MsFlags, ProtFlags},
-    sys::signal,
-};
+use nix::sys::signal;
 use once_cell::sync::Lazy;
 
-use crate::shell::{is_subshell, kill, SHM};
+use crate::shell::{is_subshell, kill};
 use crate::traits::IntoVec;
 use crate::{bash, command, Error, Result};
 
@@ -321,20 +317,8 @@ impl From<ExitStatus> for ExecStatus {
 
 /// Raise an error and reset the current bash process from within a builtin.
 pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
-    let err = err.as_ref();
-    if err.len() > SHM.size - 1 {
-        return Err(Error::Base(format!("error message larger than {} bytes", SHM.size - 1,)));
-    }
-
-    unsafe {
-        let ptr =
-            mmap(ptr::null_mut(), SHM.size, ProtFlags::PROT_WRITE, MapFlags::MAP_SHARED, SHM.fd, 0)
-                .map_err(|e| Error::Base(format!("failed mmap shared memory: {}", e)))?;
-        let data = CString::new(err).unwrap();
-        snprintf(ptr as *mut _, SHM.size, data.as_ptr());
-        msync(ptr as *mut _, SHM.size, MsFlags::MS_SYNC)
-            .map_err(|e| Error::Base(format!("failed msync shared memory: {}", e)))?;
-    }
+    let data = CString::new(err.as_ref()).unwrap();
+    unsafe { bash::shm_error(data.as_ptr()) };
 
     // TODO: send SIGTERM to background jobs (use jobs builtin)
     match is_subshell() {

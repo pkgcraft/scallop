@@ -141,6 +141,8 @@ fn main() {
         .allowlist_var("EXECUTION_FAILURE")
         .allowlist_var("EXECUTION_SUCCESS")
         .allowlist_var("EX_LONGJMP")
+        // error.h
+        .allowlist_function("shm_error")
         // variables.h
         .allowlist_function("get_string_value")
         .allowlist_function("bind_variable")
