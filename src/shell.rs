@@ -35,9 +35,9 @@ impl Shell {
             bash::lib_init();
         }
 
-        // forcibly create shm file and store global pid
+        // force main pid and shm name initialization
         Lazy::force(&PID);
-        Lazy::force(&SHM);
+        Lazy::force(&SHM_NAME);
 
         Shell { _name: name }
     }
@@ -93,7 +93,7 @@ impl Drop for Shell {
         if !is_subshell() {
             self.reset();
             // ignore unlinking errors
-            let _ = shm_unlink(SHM.name.as_str());
+            let _ = shm_unlink(SHM_NAME.as_str());
         }
     }
 }
@@ -112,23 +112,22 @@ pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
 
 #[derive(Debug)]
 struct Shm {
-    name: String,
     size: usize,
     fd: RawFd,
 }
 
 impl Default for Shm {
     fn default() -> Self {
-        let name = format!("/scallop-{}", *PID);
         let size: usize = 4096;
         let flag = OFlag::O_CREAT | OFlag::O_TRUNC | OFlag::O_RDWR;
         let mode = Mode::S_IWUSR | Mode::S_IRUSR;
-        let fd = shm_open(name.as_str(), flag, mode).expect("failed opening shared memory");
+        let fd = shm_open(SHM_NAME.as_str(), flag, mode).expect("failed opening shared memory");
         ftruncate(fd, size as i64).expect("failed truncating shared memory");
-        Shm { name, size, fd }
+        Shm { size, fd }
     }
 }
 
+static SHM_NAME: Lazy<String> = Lazy::new(|| format!("/scallop-{}", *PID));
 static SHM: Lazy<Shm> = Lazy::new(Default::default);
 
 /// Inject an error into bash.
