@@ -102,9 +102,9 @@ impl From<Builtin> for bash::Builtin {
 }
 
 // Enable or disable a given list of builtins.
-fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<String>> {
-    let mut unknown: Vec<&str> = vec![];
-    let mut toggled: Vec<String> = vec![];
+fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<&str>> {
+    let mut unknown = Vec::<&str>::new();
+    let mut toggled = Vec::<&str>::new();
     for name in builtins {
         let name = name.as_ref();
         let builtin_name = CString::new(name).unwrap();
@@ -113,7 +113,7 @@ fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<Stri
             Some(b) => {
                 let enabled = (b.flags & Attr::ENABLED.bits() as i32) == 1;
                 if enabled != enable {
-                    toggled.push(name.to_string());
+                    toggled.push(name);
                     match enable {
                         true => b.flags |= Attr::ENABLED.bits() as i32,
                         false => b.flags &= !Attr::ENABLED.bits() as i32,
@@ -132,13 +132,13 @@ fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<Stri
 
 /// Disable a given list of builtins by name.
 #[inline]
-pub fn disable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<String>> {
+pub fn disable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<&str>> {
     toggle_status(builtins, false)
 }
 
 /// Enable a given list of builtins by name.
 #[inline]
-pub fn enable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<String>> {
+pub fn enable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<&str>> {
     toggle_status(builtins, true)
 }
 
@@ -175,8 +175,8 @@ impl ScopedBuiltins {
     pub fn new<S: AsRef<str>>(builtins: (&[S], &[S])) -> Result<Self> {
         let (add, sub) = builtins;
         Ok(ScopedBuiltins {
-            enabled: enable(add)?,
-            disabled: disable(sub)?,
+            enabled: enable(add)?.into_iter().map(|s| s.into()).collect(),
+            disabled: disable(sub)?.into_iter().map(|s| s.into()).collect(),
         })
     }
 }
@@ -342,7 +342,7 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
         .unwrap_or_else(|| panic!("unknown builtin: {}", cmd));
     let args = list.into_vec();
 
-    match builtin.run(args.as_slice()) {
+    match builtin.run(&args) {
         Ok(ret) => i32::from(ret),
         Err(e) => {
             match e {
