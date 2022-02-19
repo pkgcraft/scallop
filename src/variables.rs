@@ -240,7 +240,7 @@ pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
     let var_name = CString::new(name).unwrap();
     let ptr = unsafe { bash::get_string_value(var_name.as_ptr()).as_mut() };
     match ptr {
-        None => Err(Error::Base(format!("undefined variable: {}", name))),
+        None => Err(Error::Base(format!("undefined variable: {name}"))),
         Some(s) => {
             let words = unsafe { bash::list_string(s, bash::IFS, 1) };
             // TODO: implement iterators directly for WordList
@@ -257,10 +257,10 @@ pub fn array_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
     let var_name = CString::new(name).unwrap();
     let var = unsafe { bash::find_variable(var_name.as_ptr()).as_ref() };
     let array_ptr = match var {
-        None => return Err(Error::Base(format!("undefined variable: {}", name))),
+        None => return Err(Error::Base(format!("undefined variable: {name}"))),
         Some(v) => match (v.attributes as u32 & Attr::ARRAY.bits()) != 0 {
             true => v.value as *mut bash::Array,
-            false => return Err(Error::Base(format!("variable is not an array: {}", name))),
+            false => return Err(Error::Base(format!("variable is not an array: {name}"))),
         },
     };
 

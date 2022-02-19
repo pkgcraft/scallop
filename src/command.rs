@@ -70,7 +70,7 @@ impl FromStr for Command {
             bash::with_input_from_string(cmd_ptr, name_ptr);
             cmd = match bash::parse_command() {
                 0 => bash::copy_command(bash::GLOBAL_COMMAND),
-                _ => return Err(Error::Base(format!("failed parsing: {}", s))),
+                _ => return Err(Error::Base(format!("failed parsing: {s}"))),
             };
 
             // clean up global command

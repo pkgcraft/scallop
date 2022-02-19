@@ -339,15 +339,15 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     let builtin_map = BUILTINS.read().unwrap();
     let builtin = builtin_map
         .get(cmd)
-        .unwrap_or_else(|| panic!("unknown builtin: {}", cmd));
+        .unwrap_or_else(|| panic!("unknown builtin: {cmd}"));
     let args = list.into_vec();
 
     match builtin.run(&args) {
         Ok(ret) => i32::from(ret),
         Err(e) => {
             match e {
-                Error::Builtin(_) => eprintln!("{}: error: {}", cmd, e),
-                _ => eprintln!("{}", e),
+                Error::Builtin(_) => eprintln!("{cmd}: error: {e}"),
+                _ => eprintln!("{e}"),
             }
             i32::from(ExecStatus::Failure)
         }

@@ -62,7 +62,7 @@ impl Shell {
         mem::forget(argv_ptrs);
 
         let env_strs: Vec<CString> = env::vars()
-            .map(|(key, val)| format!("{}={}", key, val))
+            .map(|(key, val)| format!("{key}={val}"))
             .map(|s| CString::new(s).unwrap())
             .collect();
         let mut env_ptrs: Vec<*mut c_char> =
