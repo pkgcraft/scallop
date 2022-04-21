@@ -349,7 +349,7 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
                 Error::Builtin(_) => eprintln!("{cmd}: error: {e}"),
                 _ => eprintln!("{e}"),
             }
-            i32::from(ExecStatus::Failure)
+            1
         }
     }
 }
