@@ -277,7 +277,7 @@ where
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ExecStatus {
     Success,
-    Failure,
+    Failure(i32),
     Error,
 }
 
@@ -285,7 +285,7 @@ impl From<ExecStatus> for i32 {
     fn from(exec: ExecStatus) -> i32 {
         match exec {
             ExecStatus::Success => bash::EXECUTION_SUCCESS as i32,
-            ExecStatus::Failure => bash::EXECUTION_FAILURE as i32,
+            ExecStatus::Failure(n) => n,
             ExecStatus::Error => bash::EX_LONGJMP as i32,
         }
     }
@@ -301,7 +301,7 @@ impl From<bool> for ExecStatus {
     fn from(value: bool) -> ExecStatus {
         match value {
             true => ExecStatus::Success,
-            false => ExecStatus::Failure,
+            false => ExecStatus::Failure(1),
         }
     }
 }
@@ -310,7 +310,7 @@ impl From<ExitStatus> for ExecStatus {
     fn from(status: ExitStatus) -> ExecStatus {
         match status.success() {
             true => ExecStatus::Success,
-            false => ExecStatus::Failure,
+            false => ExecStatus::Failure(1),
         }
     }
 }
