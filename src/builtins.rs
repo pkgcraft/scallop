@@ -291,6 +291,15 @@ impl From<ExecStatus> for i32 {
     }
 }
 
+impl From<i32> for ExecStatus {
+    fn from(ret: i32) -> ExecStatus {
+        match ret {
+            0 => ExecStatus::Success,
+            n => ExecStatus::Failure(n),
+        }
+    }
+}
+
 impl From<&ExecStatus> for bool {
     fn from(exec: &ExecStatus) -> bool {
         matches!(exec, ExecStatus::Success)
