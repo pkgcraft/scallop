@@ -49,6 +49,12 @@ impl fmt::Debug for Builtin {
     }
 }
 
+impl fmt::Display for Builtin {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
 impl PartialEq for Builtin {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
