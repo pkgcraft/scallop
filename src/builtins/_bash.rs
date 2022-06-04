@@ -9,13 +9,13 @@ use crate::{bash, Result};
 
 /// Run the `local` builtin with the given arguments.
 pub fn local<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
-    let arg_strs: Vec<CString> = args
+    let args: Vec<CString> = args
         .iter()
         .map(|s| CString::new(s.as_ref()).unwrap())
         .collect();
-    let mut arg_ptrs: Vec<*mut c_char> = arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
-    arg_ptrs.push(ptr::null_mut());
-    let args = arg_ptrs.as_ptr() as *mut _;
+    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
+    args.push(ptr::null_mut());
+    let args = args.as_ptr() as *mut _;
 
     unsafe {
         // TODO: add better support for converting string vectors/iterators to WordLists
@@ -29,13 +29,14 @@ pub fn local<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
 }
 
 /// Run the `set` builtin with the given arguments.
-pub fn set<S1: AsRef<str>, S2: AsRef<str>>(opts: &[S1], args: &[S2]) -> Result<ExecStatus> {
-    let mut arg_strs = Vec::<CString>::new();
-    arg_strs.extend(opts.iter().map(|s| CString::new(s.as_ref()).unwrap()));
-    arg_strs.extend(args.iter().map(|s| CString::new(s.as_ref()).unwrap()));
-    let mut arg_ptrs: Vec<*mut c_char> = arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
-    arg_ptrs.push(ptr::null_mut());
-    let args = arg_ptrs.as_ptr() as *mut _;
+pub fn set<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
+    let args: Vec<_> = args
+        .iter()
+        .map(|s| CString::new(s.as_ref()).unwrap())
+        .collect();
+    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
+    args.push(ptr::null_mut());
+    let args = args.as_ptr() as *mut _;
 
     unsafe {
         // TODO: add better support for converting string vectors/iterators to WordLists
@@ -49,13 +50,14 @@ pub fn set<S1: AsRef<str>, S2: AsRef<str>>(opts: &[S1], args: &[S2]) -> Result<E
 }
 
 /// Run the `shopt` builtin with the given arguments.
-pub fn shopt<S1: AsRef<str>, S2: AsRef<str>>(opts: &[S1], args: &[S2]) -> Result<ExecStatus> {
-    let mut arg_strs = Vec::<CString>::new();
-    arg_strs.extend(opts.iter().map(|s| CString::new(s.as_ref()).unwrap()));
-    arg_strs.extend(args.iter().map(|s| CString::new(s.as_ref()).unwrap()));
-    let mut arg_ptrs: Vec<*mut c_char> = arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
-    arg_ptrs.push(ptr::null_mut());
-    let args = arg_ptrs.as_ptr() as *mut _;
+pub fn shopt<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
+    let args: Vec<_> = args
+        .iter()
+        .map(|s| CString::new(s.as_ref()).unwrap())
+        .collect();
+    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
+    args.push(ptr::null_mut());
+    let args = args.as_ptr() as *mut _;
 
     unsafe {
         // TODO: add better support for converting string vectors/iterators to WordLists

@@ -39,11 +39,19 @@ pub mod set {
     use super::*;
 
     pub fn enable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
-        set(&["-o"], opts)
+        let args: Vec<_> = ["-o"]
+            .into_iter()
+            .chain(opts.iter().map(|s| s.as_ref()))
+            .collect();
+        set(&args)
     }
 
     pub fn disable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
-        set(&["+o"], opts)
+        let args: Vec<_> = ["+o"]
+            .into_iter()
+            .chain(opts.iter().map(|s| s.as_ref()))
+            .collect();
+        set(&args)
     }
 }
 
@@ -51,11 +59,19 @@ pub mod shopt {
     use super::*;
 
     pub fn enable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
-        shopt(&["-s"], opts)
+        let args: Vec<_> = ["-s"]
+            .into_iter()
+            .chain(opts.iter().map(|s| s.as_ref()))
+            .collect();
+        shopt(&args)
     }
 
     pub fn disable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
-        shopt(&["-u"], opts)
+        let args: Vec<_> = ["-u"]
+            .into_iter()
+            .chain(opts.iter().map(|s| s.as_ref()))
+            .collect();
+        shopt(&args)
     }
 }
 
