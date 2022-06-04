@@ -80,7 +80,7 @@ impl Builtin {
 impl From<Builtin> for bash::Builtin {
     fn from(builtin: Builtin) -> bash::Builtin {
         let name_str = CString::new(builtin.name).unwrap();
-        let name = name_str.as_ptr();
+        let name = name_str.as_ptr() as *mut _;
         mem::forget(name_str);
 
         let short_doc_str = CString::new(builtin.usage).unwrap();

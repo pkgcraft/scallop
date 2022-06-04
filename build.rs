@@ -180,7 +180,6 @@ fn main() {
         // array.h
         .allowlist_function("array_to_argv")
         // builtins.h
-        .blocklist_type("builtin")
         .allowlist_var("BUILTIN_ENABLED")
         .allowlist_var("STATIC_BUILTIN")
         .allowlist_var("ASSIGNMENT_BUILTIN")
