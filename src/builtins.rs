@@ -15,7 +15,7 @@ use crate::shell::{is_subshell, kill};
 use crate::traits::IntoVec;
 use crate::{bash, command, Error, Result};
 
-pub mod _bash;
+mod _bash;
 pub mod command_not_found_handle;
 pub mod profile;
 
