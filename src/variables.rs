@@ -36,6 +36,7 @@ bitflags! {
         const NONE = 0;
         const APPEND = bash::ASS_APPEND;
         const LOCAL = bash::ASS_MKLOCAL;
+        const ASSOC = bash::ASS_MKASSOC;
         const GLOBAL = bash::ASS_MKGLOBAL;
         const NAMEREF = bash::ASS_NAMEREF;
         const FORCE = bash::ASS_FORCE;
