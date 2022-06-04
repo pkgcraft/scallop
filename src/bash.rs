@@ -49,3 +49,49 @@ pub static SHOPT_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     }
     opts
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::builtins::{set, shopt};
+    use crate::Shell;
+
+    use rusty_fork::rusty_fork_test;
+
+    rusty_fork_test! {
+        #[test]
+        fn test_set_opts() {
+            let _sh = Shell::new("sh", None);
+            // noexec option exists
+            assert!(SET_OPTS.contains("noexec"));
+            // but isn't currently enabled
+            assert!(!set_opts().contains("noexec"));
+            // enable it
+            set(&["-o"], &["noexec"]).unwrap();
+            // and now it's currently enabled
+            assert!(set_opts().contains("noexec"));
+            // disable it
+            set(&["+o"], &["noexec"]).unwrap();
+            assert!(!set_opts().contains("noexec"));
+        }
+    }
+
+    rusty_fork_test! {
+        #[test]
+        fn test_shopt_opts() {
+            let _sh = Shell::new("sh", None);
+            // autocd option exists
+            assert!(SHOPT_OPTS.contains("autocd"));
+            // but isn't currently enabled
+            assert!(!shopt_opts().contains("autocd"));
+            // enable it
+            shopt(&["-s"], &["autocd"]).unwrap();
+            // and now it's currently enabled
+            assert!(shopt_opts().contains("autocd"));
+            // disable it
+            shopt(&["-u"], &["autocd"]).unwrap();
+            assert!(!shopt_opts().contains("autocd"));
+        }
+    }
+}
