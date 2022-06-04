@@ -200,8 +200,10 @@ impl Drop for ScopedBuiltins {
 
 #[derive(Debug, Default)]
 pub struct ScopedOptions {
-    set: Vec<String>,
-    unset: Vec<String>,
+    shopt_enabled: Vec<String>,
+    shopt_disabled: Vec<String>,
+    set_enabled: Vec<String>,
+    set_disabled: Vec<String>,
 }
 
 /// Enable/disable shell options, automatically reverting their status when leaving scope.
@@ -210,37 +212,54 @@ impl ScopedOptions {
         ScopedOptions::default()
     }
 
-    pub fn toggle<S: AsRef<str>>(&mut self, set: &[S], unset: &[S]) -> Result<()> {
-        let enabled = bash::shell_opts();
-        if !set.is_empty() {
-            let set: Vec<String> = set
-                .iter()
-                .map(|s| s.as_ref().to_string())
-                .filter(|s| !enabled.contains(s))
-                .collect();
-            shopt(&["-s"], &set)?;
-            self.set.extend(set);
+    pub fn toggle<S: AsRef<str>>(&mut self, enable: &[S], disable: &[S]) -> Result<()> {
+        let enabled_shopt = bash::shopt_opts();
+        let enabled_set = bash::set_opts();
+        for opt in enable.iter().map(|s| s.as_ref()) {
+            match (bash::SET_OPTS.contains(opt), bash::SHOPT_OPTS.contains(opt)) {
+                (true, false) if !enabled_set.contains(opt) => {
+                    set(&["-o"], &[opt])?;
+                    self.set_enabled.push(opt.into());
+                }
+                (false, true) if !enabled_shopt.contains(opt) => {
+                    shopt(&["-s"], &[opt])?;
+                    self.shopt_enabled.push(opt.into());
+                }
+                _ => (),
+            }
         }
-        if !unset.is_empty() {
-            let unset: Vec<String> = unset
-                .iter()
-                .map(|s| s.as_ref().to_string())
-                .filter(|s| enabled.contains(s))
-                .collect();
-            shopt(&["-u"], &unset)?;
-            self.unset.extend(unset);
+
+        for opt in disable.iter().map(|s| s.as_ref()) {
+            match (bash::SET_OPTS.contains(opt), bash::SHOPT_OPTS.contains(opt)) {
+                (true, false) if enabled_set.contains(opt) => {
+                    set(&["+o"], &[opt])?;
+                    self.set_disabled.push(opt.into());
+                }
+                (false, true) if enabled_shopt.contains(opt) => {
+                    shopt(&["-u"], &[opt])?;
+                    self.shopt_disabled.push(opt.into());
+                }
+                _ => (),
+            }
         }
+
         Ok(())
     }
 }
 
 impl Drop for ScopedOptions {
     fn drop(&mut self) {
-        if !self.set.is_empty() {
-            shopt(&["-u"], &self.set).expect("failed unsetting options");
+        if !self.shopt_enabled.is_empty() {
+            shopt(&["-u"], &self.shopt_enabled).expect("failed unsetting shopt options");
         }
-        if !self.unset.is_empty() {
-            shopt(&["-s"], &self.unset).expect("failed setting options");
+        if !self.shopt_disabled.is_empty() {
+            shopt(&["-s"], &self.shopt_disabled).expect("failed setting shopt options");
+        }
+        if !self.set_enabled.is_empty() {
+            set(&["+o"], &self.set_enabled).expect("failed unsetting set options");
+        }
+        if !self.set_disabled.is_empty() {
+            set(&["-o"], &self.set_disabled).expect("failed setting set options");
         }
     }
 }
@@ -405,36 +424,36 @@ mod tests {
             let _sh = Shell::new("sh", None);
             let (set, unset) = ("autocd", "sourcepath");
 
-            assert!(!bash::shell_opts().contains(set));
-            assert!(bash::shell_opts().contains(unset));
+            assert!(!bash::shopt_opts().contains(set));
+            assert!(bash::shopt_opts().contains(unset));
             {
                 let mut opts = ScopedOptions::new();
                 opts.toggle(&[set], &[unset]).unwrap();
-                assert!(bash::shell_opts().contains(set));
-                assert!(!bash::shell_opts().contains(unset));
+                assert!(bash::shopt_opts().contains(set));
+                assert!(!bash::shopt_opts().contains(unset));
             }
-            assert!(!bash::shell_opts().contains(set));
-            assert!(bash::shell_opts().contains(unset));
+            assert!(!bash::shopt_opts().contains(set));
+            assert!(bash::shopt_opts().contains(unset));
 
             // toggle options in separate scope from ScopedOptions creation
             {
                 let mut opts = ScopedOptions::new();
                 // options aren't toggled
-                assert!(!bash::shell_opts().contains(set));
-                assert!(bash::shell_opts().contains(unset));
+                assert!(!bash::shopt_opts().contains(set));
+                assert!(bash::shopt_opts().contains(unset));
                 {
                     opts.toggle(&[set], &[unset]).unwrap();
                     // options are toggled
-                    assert!(bash::shell_opts().contains(set));
-                    assert!(!bash::shell_opts().contains(unset));
+                    assert!(bash::shopt_opts().contains(set));
+                    assert!(!bash::shopt_opts().contains(unset));
                 }
                 // options are still toggled
-                assert!(bash::shell_opts().contains(set));
-                assert!(!bash::shell_opts().contains(unset));
+                assert!(bash::shopt_opts().contains(set));
+                assert!(!bash::shopt_opts().contains(unset));
             }
             // options have been reverted
-            assert!(!bash::shell_opts().contains(set));
-            assert!(bash::shell_opts().contains(unset));
+            assert!(!bash::shopt_opts().contains(set));
+            assert!(bash::shopt_opts().contains(unset));
         }
     }
 }
