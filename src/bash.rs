@@ -26,15 +26,11 @@ pub fn shopt_opts() -> HashSet<String> {
 pub static SET_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     let opt_ptrs = unsafe { get_set_options() };
     let mut opts = HashSet::new();
+    let mut i = 0;
     unsafe {
-        for i in 0.. {
-            let opt_ptr = *(opt_ptrs.offset(i));
-            match opt_ptr.as_ref() {
-                Some(p) => {
-                    opts.insert(CStr::from_ptr(p).to_str().unwrap());
-                }
-                None => break,
-            }
+        while let Some(p) = (*opt_ptrs.offset(i)).as_ref() {
+            opts.insert(CStr::from_ptr(p).to_str().unwrap());
+            i += 1;
         }
     }
     opts
@@ -44,15 +40,11 @@ pub static SET_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 pub static SHOPT_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     let opt_ptrs = unsafe { get_shopt_options() };
     let mut opts = HashSet::new();
+    let mut i = 0;
     unsafe {
-        for i in 0.. {
-            let opt_ptr = *(opt_ptrs.offset(i));
-            match opt_ptr.as_ref() {
-                Some(p) => {
-                    opts.insert(CStr::from_ptr(p).to_str().unwrap());
-                }
-                None => break,
-            }
+        while let Some(p) = (*opt_ptrs.offset(i)).as_ref() {
+            opts.insert(CStr::from_ptr(p).to_str().unwrap());
+            i += 1;
         }
     }
     opts
