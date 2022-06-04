@@ -29,6 +29,7 @@ impl ParseCallbacks for BashCallback {
             "ifs_value" => Some("IFS".into()),
             "shell_builtins" => Some("SHELL_BUILTINS".into()),
             "num_shell_builtins" => Some("NUM_SHELL_BUILTINS".into()),
+            "get_minus_o_opts" => Some("get_set_options".into()),
             _ => None,
         }
     }
@@ -171,6 +172,8 @@ fn main() {
         .allowlist_function("source_file")
         .allowlist_function("register_builtins")
         .allowlist_function("builtin_address_internal")
+        .allowlist_function("get_minus_o_opts")
+        .allowlist_function("get_shopt_options")
         .allowlist_var("SEVAL_.*")
         // subst.h
         .allowlist_function("expand_string_to_string")

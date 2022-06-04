@@ -1,4 +1,7 @@
 use std::collections::HashSet;
+use std::ffi::CStr;
+
+use once_cell::sync::Lazy;
 
 use crate::variables::string_value;
 
@@ -18,3 +21,39 @@ pub fn shopt_opts() -> HashSet<String> {
     let opts = string_value("BASHOPTS").unwrap();
     opts.split(':').map(|s| s.to_string()).collect()
 }
+
+/// Return the set of all shell options used with the `set` builtin.
+pub static SET_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+    let opt_ptrs = unsafe { get_set_options() };
+    let mut opts = HashSet::new();
+    unsafe {
+        for i in 0.. {
+            let opt_ptr = *(opt_ptrs.offset(i));
+            match opt_ptr.as_ref() {
+                Some(p) => {
+                    opts.insert(CStr::from_ptr(p).to_str().unwrap());
+                }
+                None => break,
+            }
+        }
+    }
+    opts
+});
+
+/// Return the set of all shell options used with the `shopt` builtin.
+pub static SHOPT_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+    let opt_ptrs = unsafe { get_shopt_options() };
+    let mut opts = HashSet::new();
+    unsafe {
+        for i in 0.. {
+            let opt_ptr = *(opt_ptrs.offset(i));
+            match opt_ptr.as_ref() {
+                Some(p) => {
+                    opts.insert(CStr::from_ptr(p).to_str().unwrap());
+                }
+                None => break,
+            }
+        }
+    }
+    opts
+});
