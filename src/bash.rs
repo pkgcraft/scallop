@@ -4,9 +4,8 @@ use crate::variables::string_value;
 
 mod internal;
 
-pub(crate) use internal::*;
-// export Builtin for scallop-builtins to use
-pub use internal::Builtin;
+// export bash API for external usage
+pub use internal::*;
 
 /// Return the set of currently enabled shell options.
 pub fn shell_opts() -> HashSet<String> {
