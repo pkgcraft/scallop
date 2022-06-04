@@ -35,6 +35,30 @@ bitflags! {
     }
 }
 
+pub mod set {
+    use super::*;
+
+    pub fn enable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+        set(&["-o"], opts)
+    }
+
+    pub fn disable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+        set(&["+o"], opts)
+    }
+}
+
+pub mod shopt {
+    use super::*;
+
+    pub fn enable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+        shopt(&["-s"], opts)
+    }
+
+    pub fn disable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+        shopt(&["-u"], opts)
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Builtin {
     pub name: &'static str,
@@ -218,11 +242,11 @@ impl ScopedOptions {
         for opt in enable.iter().map(|s| s.as_ref()) {
             match (bash::SET_OPTS.contains(opt), bash::SHOPT_OPTS.contains(opt)) {
                 (true, false) if !enabled_set.contains(opt) => {
-                    set(&["-o"], &[opt])?;
+                    set::enable(&[opt])?;
                     self.set_enabled.push(opt.into());
                 }
                 (false, true) if !enabled_shopt.contains(opt) => {
-                    shopt(&["-s"], &[opt])?;
+                    shopt::enable(&[opt])?;
                     self.shopt_enabled.push(opt.into());
                 }
                 _ => (),
@@ -232,11 +256,11 @@ impl ScopedOptions {
         for opt in disable.iter().map(|s| s.as_ref()) {
             match (bash::SET_OPTS.contains(opt), bash::SHOPT_OPTS.contains(opt)) {
                 (true, false) if enabled_set.contains(opt) => {
-                    set(&["+o"], &[opt])?;
+                    set::disable(&[opt])?;
                     self.set_disabled.push(opt.into());
                 }
                 (false, true) if enabled_shopt.contains(opt) => {
-                    shopt(&["-u"], &[opt])?;
+                    shopt::disable(&[opt])?;
                     self.shopt_disabled.push(opt.into());
                 }
                 _ => (),
@@ -250,16 +274,16 @@ impl ScopedOptions {
 impl Drop for ScopedOptions {
     fn drop(&mut self) {
         if !self.shopt_enabled.is_empty() {
-            shopt(&["-u"], &self.shopt_enabled).expect("failed unsetting shopt options");
+            shopt::disable(&self.shopt_enabled).expect("failed unsetting shopt options");
         }
         if !self.shopt_disabled.is_empty() {
-            shopt(&["-s"], &self.shopt_disabled).expect("failed setting shopt options");
+            shopt::enable(&self.shopt_disabled).expect("failed setting shopt options");
         }
         if !self.set_enabled.is_empty() {
-            set(&["+o"], &self.set_enabled).expect("failed unsetting set options");
+            set::disable(&self.set_enabled).expect("failed unsetting set options");
         }
         if !self.set_disabled.is_empty() {
-            set(&["-o"], &self.set_disabled).expect("failed setting set options");
+            set::enable(&self.set_disabled).expect("failed setting set options");
         }
     }
 }
