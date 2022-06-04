@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant};
 
 use crate::builtins::{Builtin, ExecStatus};
 use crate::command::Command;
@@ -30,9 +30,9 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
         }
     });
 
-    let start = SystemTime::now();
+    let start = Instant::now();
     thread::sleep(Duration::from_secs(3));
-    let elapsed = start.elapsed().expect("failed getting elapsed time");
+    let elapsed = start.elapsed();
     let loops = loops
         .load(Ordering::SeqCst)
         .try_into()
