@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, SystemTime};
@@ -16,29 +16,37 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     }
 
     let orig_cmd = args.join(" ");
-    // force success so the shell doesn't exit prematurely while profiling
-    let cmd_str = format!("{orig_cmd} || :");
-    let cmd = Command::new(cmd_str, None)?;
-
-    let timeout = Arc::new(AtomicBool::new(false));
-    let timeout2 = Arc::clone(&timeout);
-    let mut loops = 0;
-
+    let loops = Arc::new(AtomicUsize::new(0));
+    let loops_t = loops.clone();
     eprintln!("profiling: {orig_cmd}");
 
-    thread::spawn(move || {
-        thread::sleep(Duration::from_secs(3));
-        timeout2.store(true, Ordering::Relaxed);
+    thread::spawn(move || -> Result<()> {
+        // force success so the shell doesn't exit prematurely while profiling
+        let cmd_str = format!("{orig_cmd} || :");
+        let cmd = Command::new(cmd_str, None)?;
+        loop {
+            cmd.execute().ok();
+            loops_t.fetch_add(1, Ordering::SeqCst);
+        }
     });
 
     let start = SystemTime::now();
-    while !timeout.load(Ordering::Relaxed) {
-        cmd.execute().ok();
-        loops += 1;
-    }
+    thread::sleep(Duration::from_secs(3));
     let elapsed = start.elapsed().expect("failed getting elapsed time");
-    let per_loop = elapsed / loops;
-    eprintln!("elapsed {elapsed:?}, loops: {loops}, per loop: {per_loop:?}");
+    let loops = loops
+        .load(Ordering::SeqCst)
+        .try_into()
+        .map_err(|_| Error::Base("failed converting loops".to_string()))?;
+
+    match loops {
+        0 => {
+            eprintln!("elapsed {elapsed:?}, loops: 0");
+        }
+        n => {
+            let per_loop = elapsed / loops;
+            eprintln!("elapsed {elapsed:?}, loops: {n}, per loop: {per_loop:?}");
+        }
+    }
 
     Ok(ExecStatus::Success)
 }
