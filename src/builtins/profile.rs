@@ -12,6 +12,10 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
         return Err(Error::Builtin("requires 1 or more args, got 0".into()));
     }
 
+    // disable shell history so the command being profiled isn't added
+    let mut opts = ScopedOptions::new();
+    opts.toggle(&[], &["history"])?;
+
     let mut loops = 0;
     let mut elapsed = Duration::new(0, 0);
     let orig_cmd = args.join(" ");
