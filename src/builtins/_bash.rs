@@ -7,6 +7,27 @@ use crate::command::cmd_scope;
 use crate::error::ok_or_error;
 use crate::{bash, Result};
 
+/// Run the `declare` builtin with the given arguments.
+pub fn declare<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
+    let args: Vec<CString> = args
+        .iter()
+        .map(|s| CString::new(s.as_ref()).unwrap())
+        .collect();
+    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
+    args.push(ptr::null_mut());
+    let args = args.as_ptr() as *mut _;
+
+    unsafe {
+        // TODO: add better support for converting string vectors/iterators to WordLists
+        let words = bash::strvec_to_word_list(args, 0, 0);
+        cmd_scope("declare", || {
+            bash::declare_builtin(words);
+        });
+    }
+
+    ok_or_error()
+}
+
 /// Run the `local` builtin with the given arguments.
 pub fn local<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
     let args: Vec<CString> = args
