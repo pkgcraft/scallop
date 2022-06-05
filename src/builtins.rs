@@ -404,16 +404,18 @@ pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
     }
 }
 
+/// Get the builtin matching the current running command if it exists.
+pub fn running_builtin() -> Option<&'static Builtin> {
+    command::current()
+        .and_then(|c| BUILTINS.try_read().ok().map(|b| b.get(c).cloned()))
+        .flatten()
+}
+
 /// Builtin function wrapper converting between rust and C types.
 #[no_mangle]
 extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
-    // get the current running command name
-    let cmd = command::current().expect("failed getting current command");
-    // find its matching rust function and execute it
-    let builtin_map = BUILTINS.read().unwrap();
-    let builtin = builtin_map
-        .get(cmd)
-        .unwrap_or_else(|| panic!("unknown builtin: {cmd}"));
+    let builtin = running_builtin().expect("unknown builtin");
+    let cmd = builtin.name;
     let args = list.into_vec();
 
     match builtin.run(&args) {
