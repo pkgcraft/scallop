@@ -18,13 +18,9 @@ pub struct Shell {
 
 impl Shell {
     /// Create and initialize the shell for general use.
-    pub fn new<S: AsRef<str>>(name: S, builtins: Option<Vec<&'static builtins::Builtin>>) -> Self {
-        if let Some(builtins) = builtins {
-            builtins::register(builtins);
-        }
-
+    pub fn new(name: &str) -> Self {
         // initialize bash for library usage
-        let name = CString::new(name.as_ref()).unwrap();
+        let name = CString::new(name).unwrap();
         unsafe {
             bash::set_shell_name(name.as_ptr() as *mut _);
             bash::lib_error_handlers(Some(error::bash_error), Some(error::bash_warning));
@@ -37,6 +33,13 @@ impl Shell {
         Lazy::force(&PID);
 
         Shell { _name: name }
+    }
+
+    pub fn builtins<I>(&self, builtins: I)
+    where
+        I: IntoIterator<Item = &'static builtins::Builtin> + Copy,
+    {
+        builtins::register(builtins);
     }
 
     /// Reset the shell back to a pristine state.
@@ -115,7 +118,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_reset() {
-            let sh = Shell::new("sh", None);
+            let sh = Shell::new("sh");
             bind("VAR", "1", None, None).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "1");
             sh.reset();

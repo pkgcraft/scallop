@@ -325,17 +325,20 @@ impl Drop for ScopedOptions {
 }
 
 /// Register builtins into the internal list for use.
-pub fn register(builtins: Vec<&'static Builtin>) {
+pub fn register<I>(builtins: I)
+where
+    I: IntoIterator<Item = &'static Builtin> + Copy,
+{
     unsafe {
         // convert builtins into pointers
-        let mut builtin_ptrs: Vec<*mut bash::Builtin> = builtins
-            .iter()
-            .map(|&b| Box::into_raw(Box::new((*b).into())))
+        let mut builtin_ptrs: Vec<_> = builtins
+            .into_iter()
+            .map(|b| Box::into_raw(Box::new((*b).into())))
             .collect();
 
         // add builtins to bash's internal list
-        let builtins_len: i32 = builtins.len().try_into().unwrap();
-        bash::register_builtins(builtin_ptrs.as_mut_ptr(), builtins_len);
+        let len: i32 = builtin_ptrs.len().try_into().unwrap();
+        bash::register_builtins(builtin_ptrs.as_mut_ptr(), len);
 
         // reclaim pointers for proper deallocation
         for b in builtin_ptrs {
@@ -460,7 +463,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn toggle_status() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
 
             // select a builtin to toggle
             let (enabled, disabled) = shell_builtins();
@@ -483,7 +486,7 @@ mod tests {
 
         #[test]
         fn scoped_options() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             let (set, unset) = ("autocd", "sourcepath");
 
             assert!(!bash::shopt_opts().contains(set));

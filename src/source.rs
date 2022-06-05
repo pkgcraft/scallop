@@ -65,7 +65,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_source_string() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             assert_eq!(string_value("VAR"), None);
 
             source::string("VAR=1").unwrap();
@@ -80,7 +80,7 @@ mod tests {
 
         #[test]
         fn test_source_string_error() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             // bad bash code raises error
             let err = source::string("local VAR").unwrap_err();
             assert_eq!(err.to_string(), "sh: local: can only be used in a function");
@@ -93,7 +93,7 @@ mod tests {
 
         #[test]
         fn test_source_file() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             assert_eq!(string_value("VAR"), None);
             let mut file = NamedTempFile::new().unwrap();
 
@@ -112,7 +112,7 @@ mod tests {
 
         #[test]
         fn test_source_file_error() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             assert_eq!(string_value("VAR"), None);
             let mut file = NamedTempFile::new().unwrap();
 

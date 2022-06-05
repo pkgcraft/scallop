@@ -62,7 +62,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_set_opts() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             // noexec option exists
             assert!(SET_OPTS.contains("noexec"));
             // but isn't currently enabled
@@ -80,7 +80,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_shopt_opts() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             // autocd option exists
             assert!(SHOPT_OPTS.contains("autocd"));
             // but isn't currently enabled

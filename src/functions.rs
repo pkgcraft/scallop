@@ -60,7 +60,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_find() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             assert!(find("foo").is_none());
             source::string("foo() { :; }").unwrap();
             assert!(find("foo").is_some());
@@ -68,7 +68,7 @@ mod tests {
 
         #[test]
         fn execute() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             assert_eq!(string_value("VAR"), None);
             source::string("foo() { VAR=$1; }").unwrap();
             let mut func = find("foo").unwrap();
@@ -80,7 +80,7 @@ mod tests {
 
         #[test]
         fn test_bash_func() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             bind("VAR", "outer", None, None).unwrap();
             bash_func("func_name", || {
                 local(&["VAR=inner"]).unwrap();

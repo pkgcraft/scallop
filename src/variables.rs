@@ -300,7 +300,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_string_vec() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             assert!(string_vec("VAR").is_err());
             bind("VAR", "", None, None).unwrap();
             assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
@@ -314,7 +314,7 @@ mod tests {
 
         #[test]
         fn test_readonly_var() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             bind("VAR", "1", None, Some(Attr::READONLY)).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "1");
             let err = bind("VAR", "1", None, None).unwrap_err();
@@ -325,7 +325,7 @@ mod tests {
 
         #[test]
         fn test_variable() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             let mut var = Variable::new("VAR");
             assert_eq!(var.string_value(), None);
             var.bind("", None, None).unwrap();
@@ -342,7 +342,7 @@ mod tests {
 
         #[test]
         fn test_expand() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             let mut var1 = Variable::new("VAR1");
             let mut var2 = Variable::new("VAR2");
             var1.bind("1", None, None).unwrap();
@@ -353,7 +353,7 @@ mod tests {
 
         #[test]
         fn test_scoped_variable() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             bind("VAR", "outer", None, None).unwrap();
             assert_eq!(string_value("VAR").unwrap(), "outer");
             {

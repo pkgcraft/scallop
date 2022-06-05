@@ -103,7 +103,7 @@ mod tests {
     rusty_fork_test! {
         #[test]
         fn test_local() {
-            let _sh = Shell::new("sh", None);
+            let _sh = Shell::new("sh");
             bind("VAR", "outer", None, None).unwrap();
             bash_func("func_name", || {
                 local(&["VAR=inner"]).unwrap();
