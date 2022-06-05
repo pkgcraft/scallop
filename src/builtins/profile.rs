@@ -12,10 +12,10 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
         return Err(Error::Builtin("requires 1 or more args, got 0".into()));
     }
 
-    // Disable shell history so the command being profiled isn't added, reverting to the previous
-    // state on scope exit.
+    // Disable shell history if history support is enabled, so the command being profiled isn't
+    // added, reverting to the previous state on scope exit.
     let mut opts = ScopedOptions::default();
-    opts.disable(["history"])?;
+    let _ = opts.disable(["history"]);
 
     let mut loops = 0;
     let mut elapsed = Duration::new(0, 0);
