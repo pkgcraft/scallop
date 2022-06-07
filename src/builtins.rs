@@ -12,7 +12,6 @@ use nix::sys::signal;
 use once_cell::sync::Lazy;
 
 use crate::shell::{is_subshell, kill};
-use crate::traits::IntoVec;
 use crate::{bash, command, Error, Result};
 
 mod _bash;
@@ -439,7 +438,8 @@ pub fn running_builtin() -> Option<&'static Builtin> {
 extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
     let builtin = running_builtin().expect("unknown builtin");
     let cmd = builtin.name;
-    let args = list.into_vec();
+    let args = unsafe { list.as_ref().expect("invalid args") };
+    let args: Vec<_> = args.into_iter().collect();
 
     match builtin.run(&args) {
         Ok(ret) => i32::from(ret),

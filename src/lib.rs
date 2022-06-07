@@ -8,7 +8,6 @@ pub mod error;
 pub mod functions;
 pub mod shell;
 pub mod source;
-pub mod traits;
 pub mod variables;
 
 pub use self::error::{Error, Result};

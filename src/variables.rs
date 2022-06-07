@@ -5,7 +5,6 @@ use bitflags::bitflags;
 
 use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
-use crate::traits::IntoVec;
 use crate::{bash, Error, Result};
 
 bitflags! {
@@ -242,13 +241,15 @@ pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
     let ptr = unsafe { bash::get_string_value(var_name.as_ptr()).as_mut() };
     match ptr {
         None => Err(Error::Base(format!("undefined variable: {name}"))),
-        Some(s) => {
-            let words = unsafe { bash::list_string(s, bash::IFS, 1) };
-            // TODO: implement iterators directly for WordList
-            let strings = words.into_vec().iter().map(|s| s.to_string()).collect();
-            unsafe { bash::dispose_words(words) };
-            Ok(strings)
-        }
+        Some(s) => Ok(unsafe {
+            let mut strings = vec![];
+            let words = bash::list_string(s, bash::IFS, 1);
+            if let Some(w) = words.as_ref() {
+                strings.extend(w.into_iter().map(|s| s.to_string()));
+            }
+            bash::dispose_words(words);
+            strings
+        }),
     }
 }
 
