@@ -50,31 +50,6 @@ pub static SHOPT_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     opts
 });
 
-impl<'a> IntoIterator for &'a WordList {
-    type Item = &'a str;
-    type IntoIter = WordListIter<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        WordListIter { words: Some(self) }
-    }
-}
-
-pub struct WordListIter<'a> {
-    words: Option<&'a WordList>,
-}
-
-impl<'a> Iterator for WordListIter<'a> {
-    type Item = &'a str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.words.map(|w| unsafe {
-            self.words = w.next.as_ref();
-            let word = (*w.word).word;
-            CStr::from_ptr(word).to_str().unwrap()
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

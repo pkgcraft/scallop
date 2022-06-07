@@ -5,6 +5,7 @@ use bitflags::bitflags;
 
 use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
+use crate::traits::*;
 use crate::{bash, Error, Result};
 
 bitflags! {
@@ -243,11 +244,8 @@ pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
         None => Err(Error::Base(format!("undefined variable: {name}"))),
         Some(s) => Ok(unsafe {
             let mut strings = vec![];
-            let words = bash::list_string(s, bash::IFS, 1);
-            if let Some(w) = words.as_ref() {
-                strings.extend(w.into_iter().map(|s| s.to_string()));
-            }
-            bash::dispose_words(words);
+            let words = bash::list_string(s, bash::IFS, 1).into_words(true);
+            strings.extend(words.into_iter().map(|s| s.to_string()));
             strings
         }),
     }
