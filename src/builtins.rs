@@ -147,6 +147,38 @@ impl From<Builtin> for bash::Builtin {
     }
 }
 
+type BuiltinFnPtr = unsafe extern "C" fn(list: *mut bash::WordList) -> c_int;
+
+// Dynamically-loaded plugins require non-null function pointers since wrapping the function
+// pointer field member in Option<fn> causes bash to segfault.
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Plugin {
+    name: *const c_char,
+    function: BuiltinFnPtr,
+    flags: c_int,
+    long_doc: *const *mut c_char,
+    short_doc: *const c_char,
+    handle: *mut c_char,
+}
+
+/// Convert a Builtin to the dynamically-loaded plugin format.
+impl From<Builtin> for Plugin {
+    fn from(b: Builtin) -> Self {
+        // first convert to the Option wrapped variant
+        let b: bash::Builtin = b.into();
+        // then convert to the dynamically-loaded variant
+        Plugin {
+            name: b.name,
+            function: b.function.unwrap(),
+            flags: b.flags,
+            long_doc: b.long_doc,
+            short_doc: b.short_doc,
+            handle: b.handle,
+        }
+    }
+}
+
 // Enable or disable a given list of builtins.
 fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<&str>> {
     let mut unknown = Vec::<&str>::new();
