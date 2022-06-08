@@ -1,92 +1,45 @@
-use std::ffi::CString;
-use std::os::raw::c_char;
-use std::ptr;
-
 use crate::builtins::ExecStatus;
 use crate::command::cmd_scope;
 use crate::error::ok_or_error;
+use crate::traits::*;
 use crate::{bash, Result};
 
 /// Run the `declare` builtin with the given arguments.
-pub fn declare<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
-    let args: Vec<CString> = args
-        .iter()
-        .map(|s| CString::new(s.as_ref()).unwrap())
-        .collect();
-    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
-    args.push(ptr::null_mut());
-    let args = args.as_ptr() as *mut _;
-
-    unsafe {
-        // TODO: add better support for converting string vectors/iterators to WordLists
-        let words = bash::strvec_to_word_list(args, 0, 0);
-        cmd_scope("declare", || {
-            bash::declare_builtin(words);
-        });
-    }
+pub fn declare(args: &[&str]) -> Result<ExecStatus> {
+    let args = Words::from_iter(args.iter().copied());
+    cmd_scope("declare", || unsafe {
+        bash::declare_builtin((&args).into());
+    });
 
     ok_or_error()
 }
 
 /// Run the `local` builtin with the given arguments.
-pub fn local<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
-    let args: Vec<CString> = args
-        .iter()
-        .map(|s| CString::new(s.as_ref()).unwrap())
-        .collect();
-    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
-    args.push(ptr::null_mut());
-    let args = args.as_ptr() as *mut _;
-
-    unsafe {
-        // TODO: add better support for converting string vectors/iterators to WordLists
-        let words = bash::strvec_to_word_list(args, 0, 0);
-        cmd_scope("local", || {
-            bash::local_builtin(words);
-        });
-    }
+pub fn local(args: &[&str]) -> Result<ExecStatus> {
+    let args = Words::from_iter(args.iter().copied());
+    cmd_scope("local", || unsafe {
+        bash::local_builtin((&args).into());
+    });
 
     ok_or_error()
 }
 
 /// Run the `set` builtin with the given arguments.
-pub fn set<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
-    let args: Vec<_> = args
-        .iter()
-        .map(|s| CString::new(s.as_ref()).unwrap())
-        .collect();
-    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
-    args.push(ptr::null_mut());
-    let args = args.as_ptr() as *mut _;
-
-    unsafe {
-        // TODO: add better support for converting string vectors/iterators to WordLists
-        let words = bash::strvec_to_word_list(args, 0, 0);
-        cmd_scope("set", || {
-            bash::set_builtin(words);
-        });
-    }
+pub fn set(args: &[&str]) -> Result<ExecStatus> {
+    let args = Words::from_iter(args.iter().copied());
+    cmd_scope("set", || unsafe {
+        bash::set_builtin((&args).into());
+    });
 
     ok_or_error()
 }
 
 /// Run the `shopt` builtin with the given arguments.
-pub fn shopt<S: AsRef<str>>(args: &[S]) -> Result<ExecStatus> {
-    let args: Vec<_> = args
-        .iter()
-        .map(|s| CString::new(s.as_ref()).unwrap())
-        .collect();
-    let mut args: Vec<_> = args.iter().map(|s| s.as_ptr() as *mut c_char).collect();
-    args.push(ptr::null_mut());
-    let args = args.as_ptr() as *mut _;
-
-    unsafe {
-        // TODO: add better support for converting string vectors/iterators to WordLists
-        let words = bash::strvec_to_word_list(args, 0, 0);
-        cmd_scope("shopt", || {
-            bash::shopt_builtin(words);
-        });
-    }
+pub fn shopt(args: &[&str]) -> Result<ExecStatus> {
+    let args = Words::from_iter(args.iter().copied());
+    cmd_scope("set", || unsafe {
+        bash::shopt_builtin((&args).into());
+    });
 
     ok_or_error()
 }

@@ -1,4 +1,6 @@
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+use std::ptr;
 
 use crate::bash;
 
@@ -51,5 +53,21 @@ pub trait IntoWords {
 impl IntoWords for *mut bash::WordList {
     fn into_words(self, drop: bool) -> Words {
         Words { words: self, drop }
+    }
+}
+
+impl<'a> FromIterator<&'a str> for Words {
+    fn from_iter<I: IntoIterator<Item = &'a str>>(iter: I) -> Self {
+        let strs: Vec<_> = iter.into_iter().map(|s| CString::new(s).unwrap()).collect();
+        let mut ptrs: Vec<_> = strs.iter().map(|s| s.as_ptr() as *mut c_char).collect();
+        ptrs.push(ptr::null_mut());
+        let words = unsafe { bash::strvec_to_word_list(ptrs.as_ptr() as *mut _, 1, 0) };
+        Words { words, drop: true }
+    }
+}
+
+impl From<&Words> for *mut bash::WordList {
+    fn from(val: &Words) -> Self {
+        val.words
     }
 }
