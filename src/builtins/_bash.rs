@@ -37,7 +37,7 @@ pub fn set(args: &[&str]) -> Result<ExecStatus> {
 /// Run the `shopt` builtin with the given arguments.
 pub fn shopt(args: &[&str]) -> Result<ExecStatus> {
     let args = Words::from_iter(args.iter().copied());
-    cmd_scope("set", || unsafe {
+    cmd_scope("shopt", || unsafe {
         bash::shopt_builtin((&args).into());
     });
 
