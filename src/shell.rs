@@ -59,7 +59,7 @@ impl Shell {
         let mut argv_ptrs: Vec<*mut c_char> =
             argv_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
         argv_ptrs.push(ptr::null_mut());
-        let argv = argv_ptrs.as_ptr() as *mut _;
+        let argv = argv_ptrs.as_mut_ptr();
         let argc: c_int = argv_strs.len().try_into().unwrap();
         mem::forget(argv_strs);
         mem::forget(argv_ptrs);
@@ -71,7 +71,7 @@ impl Shell {
         let mut env_ptrs: Vec<*mut c_char> =
             env_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
         env_ptrs.push(ptr::null_mut());
-        let env = env_ptrs.as_ptr() as *mut _;
+        let env = env_ptrs.as_mut_ptr();
         mem::forget(env_strs);
         mem::forget(env_ptrs);
 

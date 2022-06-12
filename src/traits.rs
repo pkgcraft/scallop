@@ -61,7 +61,7 @@ impl<'a> FromIterator<&'a str> for Words {
         let strs: Vec<_> = iter.into_iter().map(|s| CString::new(s).unwrap()).collect();
         let mut ptrs: Vec<_> = strs.iter().map(|s| s.as_ptr() as *mut c_char).collect();
         ptrs.push(ptr::null_mut());
-        let words = unsafe { bash::strvec_to_word_list(ptrs.as_ptr() as *mut _, 1, 0) };
+        let words = unsafe { bash::strvec_to_word_list(ptrs.as_mut_ptr(), 1, 0) };
         Words { words, drop: true }
     }
 }

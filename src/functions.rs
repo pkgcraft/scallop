@@ -20,7 +20,7 @@ impl Function<'_> {
         let mut arg_ptrs: Vec<*mut c_char> =
             arg_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
         arg_ptrs.push(ptr::null_mut());
-        let args = arg_ptrs.as_ptr() as *mut _;
+        let args = arg_ptrs.as_mut_ptr();
         unsafe {
             let words = bash::strvec_to_word_list(args, 0, 0);
             bash::execute_shell_function(self.func, words);
