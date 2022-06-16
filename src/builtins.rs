@@ -149,11 +149,11 @@ impl From<Builtin> for bash::Builtin {
 
 type BuiltinFnPtr = unsafe extern "C" fn(list: *mut bash::WordList) -> c_int;
 
-// Dynamically-loaded plugins require non-null function pointers since wrapping the function
+// Dynamically-loaded builtins require non-null function pointers since wrapping the function
 // pointer field member in Option<fn> causes bash to segfault.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct Plugin {
+pub struct DynBuiltin {
     name: *const c_char,
     function: BuiltinFnPtr,
     flags: c_int,
@@ -162,13 +162,13 @@ pub struct Plugin {
     handle: *mut c_char,
 }
 
-/// Convert a Builtin to the dynamically-loaded plugin format.
-impl From<Builtin> for Plugin {
+/// Convert a Builtin to the dynamically-loaded builtin format.
+impl From<Builtin> for DynBuiltin {
     fn from(b: Builtin) -> Self {
         // first convert to the Option wrapped variant
         let b: bash::Builtin = b.into();
         // then convert to the dynamically-loaded variant
-        Plugin {
+        DynBuiltin {
             name: b.name,
             function: b.function.unwrap(),
             flags: b.flags,
