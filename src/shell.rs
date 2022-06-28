@@ -1,5 +1,5 @@
 use std::ffi::CString;
-use std::os::raw::{c_char, c_int};
+use std::os::raw::c_int;
 use std::path::Path;
 use std::{env, mem, process, ptr};
 
@@ -55,24 +55,22 @@ impl Shell {
 
     /// Start an interactive shell session.
     pub fn interactive(&self) {
-        let argv_strs: Vec<CString> = env::args().map(|s| CString::new(s).unwrap()).collect();
-        let mut argv_ptrs: Vec<*mut c_char> =
-            argv_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
+        let mut argv_ptrs: Vec<_> = env::args()
+            .map(|s| CString::new(s).unwrap().into_raw())
+            .collect();
+        let argc: c_int = argv_ptrs.len().try_into().unwrap();
         argv_ptrs.push(ptr::null_mut());
+        argv_ptrs.shrink_to_fit();
         let argv = argv_ptrs.as_mut_ptr();
-        let argc: c_int = argv_strs.len().try_into().unwrap();
-        mem::forget(argv_strs);
         mem::forget(argv_ptrs);
 
-        let env_strs: Vec<CString> = env::vars()
+        let mut env_ptrs: Vec<_> = env::vars()
             .map(|(key, val)| format!("{key}={val}"))
-            .map(|s| CString::new(s).unwrap())
+            .map(|s| CString::new(s).unwrap().into_raw())
             .collect();
-        let mut env_ptrs: Vec<*mut c_char> =
-            env_strs.iter().map(|s| s.as_ptr() as *mut _).collect();
         env_ptrs.push(ptr::null_mut());
+        env_ptrs.shrink_to_fit();
         let env = env_ptrs.as_mut_ptr();
-        mem::forget(env_strs);
         mem::forget(env_ptrs);
 
         let ret: i32;
