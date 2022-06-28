@@ -5,6 +5,7 @@ use std::os::raw::c_char;
 use tracing::warn;
 
 use crate::builtins::ExecStatus;
+use crate::shell::Shell;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -24,14 +25,17 @@ thread_local! {
 #[no_mangle]
 pub(crate) extern "C" fn bash_error(msg: *mut c_char) {
     let msg = unsafe { CStr::from_ptr(msg).to_string_lossy() };
-    LAST_ERROR.with(|prev| {
-        *prev.borrow_mut() = Some(Error::Base(msg.into()));
-    });
+    if !msg.is_empty() {
+        LAST_ERROR.with(|prev| {
+            *prev.borrow_mut() = Some(Error::Base(msg.into()));
+        });
+    }
 }
 
 /// Retrieve the most recent internal bash error.
 #[inline]
 pub fn last_error() -> Option<Error> {
+    Shell::raise_shm_error();
     LAST_ERROR.with(|prev| prev.borrow_mut().take())
 }
 

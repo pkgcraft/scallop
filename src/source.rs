@@ -59,73 +59,72 @@ mod tests {
     use crate::variables::string_value;
     use crate::{source, Shell};
 
-    use rusty_fork::rusty_fork_test;
     use tempfile::NamedTempFile;
 
-    rusty_fork_test! {
-        #[test]
-        fn test_source_string() {
-            let _sh = Shell::new("sh");
-            assert_eq!(string_value("VAR"), None);
+    #[test]
+    fn test_source_string() {
+        Shell::init();
+        assert_eq!(string_value("VAR"), None);
 
-            source::string("VAR=1").unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "1");
+        source::string("VAR=1").unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "1");
 
-            source::string("VAR=").unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "");
+        source::string("VAR=").unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "");
 
-            source::string("unset -v VAR").unwrap();
-            assert_eq!(string_value("VAR"), None);
-        }
+        source::string("unset -v VAR").unwrap();
+        assert_eq!(string_value("VAR"), None);
+    }
 
-        #[test]
-        fn test_source_string_error() {
-            let _sh = Shell::new("sh");
-            // bad bash code raises error
-            let err = source::string("local VAR").unwrap_err();
-            assert_eq!(err.to_string(), "sh: local: can only be used in a function");
+    #[test]
+    fn test_source_string_error() {
+        Shell::init();
+        // bad bash code raises error
+        let err = source::string("local VAR").unwrap_err();
+        assert_eq!(err.to_string(), "scallop: local: can only be used in a function");
 
-            // Sourcing still continues even when an error is returned
-            // because the analog to `set -e` isn't enabled.
-            assert!(source::string("local VAR\nVAR=1").is_err());
-            assert_eq!(string_value("VAR").unwrap(), "1");
-        }
+        // Sourcing still continues even when an error is returned
+        // because the analog to `set -e` isn't enabled.
+        assert!(source::string("local VAR\nVAR=1").is_err());
+        assert_eq!(string_value("VAR").unwrap(), "1");
+    }
 
-        #[test]
-        fn test_source_file() {
-            let _sh = Shell::new("sh");
-            assert_eq!(string_value("VAR"), None);
-            let mut file = NamedTempFile::new().unwrap();
+    #[test]
+    fn test_source_file() {
+        Shell::init();
+        assert_eq!(string_value("VAR"), None);
+        let mut file = NamedTempFile::new().unwrap();
 
-            writeln!(file, "VAR=1").unwrap();
-            source::file(file.path()).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "1");
+        writeln!(file, "VAR=1").unwrap();
+        source::file(file.path()).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "1");
 
-            writeln!(file, "VAR=").unwrap();
-            source::file(file.path()).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "");
+        writeln!(file, "VAR=").unwrap();
+        source::file(file.path()).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "");
 
-            writeln!(file, "unset -v VAR").unwrap();
-            source::file(file.path()).unwrap();
-            assert_eq!(string_value("VAR"), None);
-        }
+        writeln!(file, "unset -v VAR").unwrap();
+        source::file(file.path()).unwrap();
+        assert_eq!(string_value("VAR"), None);
+    }
 
-        #[test]
-        fn test_source_file_error() {
-            let _sh = Shell::new("sh");
-            assert_eq!(string_value("VAR"), None);
-            let mut file = NamedTempFile::new().unwrap();
+    #[test]
+    fn test_source_file_error() {
+        Shell::init();
+        assert_eq!(string_value("VAR"), None);
+        let mut file = NamedTempFile::new().unwrap();
 
-            // bad bash code raises error
-            writeln!(file, "local VAR").unwrap();
-            let err = source::file(file.path()).unwrap_err();
-            assert!(err.to_string().ends_with("line 1: local: can only be used in a function"));
+        // bad bash code raises error
+        writeln!(file, "local VAR").unwrap();
+        let err = source::file(file.path()).unwrap_err();
+        assert!(err
+            .to_string()
+            .ends_with("line 1: local: can only be used in a function"));
 
-            // Sourcing still continues even when an error is returned
-            // because the analog to `set -e` isn't enabled.
-            writeln!(file, "VAR=1").unwrap();
-            assert!(source::file(file.path()).is_err());
-            assert_eq!(string_value("VAR").unwrap(), "1");
-        }
+        // Sourcing still continues even when an error is returned
+        // because the analog to `set -e` isn't enabled.
+        writeln!(file, "VAR=1").unwrap();
+        assert!(source::file(file.path()).is_err());
+        assert_eq!(string_value("VAR").unwrap(), "1");
     }
 }

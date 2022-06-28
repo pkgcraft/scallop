@@ -55,38 +55,34 @@ mod tests {
     use crate::variables::{bind, string_value};
     use crate::{source, Shell};
 
-    use rusty_fork::rusty_fork_test;
+    #[test]
+    fn test_find() {
+        Shell::init();
+        assert!(find("foo").is_none());
+        source::string("foo() { :; }").unwrap();
+        assert!(find("foo").is_some());
+    }
 
-    rusty_fork_test! {
-        #[test]
-        fn test_find() {
-            let _sh = Shell::new("sh");
-            assert!(find("foo").is_none());
-            source::string("foo() { :; }").unwrap();
-            assert!(find("foo").is_some());
-        }
+    #[test]
+    fn execute() {
+        Shell::init();
+        assert_eq!(string_value("VAR"), None);
+        source::string("foo() { VAR=$1; }").unwrap();
+        let mut func = find("foo").unwrap();
+        func.execute(&[]).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "");
+        func.execute(&["1"]).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "1");
+    }
 
-        #[test]
-        fn execute() {
-            let _sh = Shell::new("sh");
-            assert_eq!(string_value("VAR"), None);
-            source::string("foo() { VAR=$1; }").unwrap();
-            let mut func = find("foo").unwrap();
-            func.execute(&[]).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "");
-            func.execute(&["1"]).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "1");
-        }
-
-        #[test]
-        fn test_bash_func() {
-            let _sh = Shell::new("sh");
-            bind("VAR", "outer", None, None).unwrap();
-            bash_func("func_name", || {
-                local(&["VAR=inner"]).unwrap();
-                assert_eq!(string_value("VAR").unwrap(), "inner");
-            });
-            assert_eq!(string_value("VAR").unwrap(), "outer");
-        }
+    #[test]
+    fn test_bash_func() {
+        Shell::init();
+        bind("VAR", "outer", None, None).unwrap();
+        bash_func("func_name", || {
+            local(&["VAR=inner"]).unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "inner");
+        });
+        assert_eq!(string_value("VAR").unwrap(), "outer");
     }
 }

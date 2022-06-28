@@ -47,22 +47,19 @@ pub fn shopt(args: &[&str]) -> Result<ExecStatus> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use crate::functions::bash_func;
     use crate::variables::{bind, string_value};
     use crate::Shell;
 
-    use rusty_fork::rusty_fork_test;
-
-    rusty_fork_test! {
-        #[test]
-        fn test_local() {
-            let _sh = Shell::new("sh");
-            bind("VAR", "outer", None, None).unwrap();
-            bash_func("func_name", || {
-                local(&["VAR=inner"]).unwrap();
-                assert_eq!(string_value("VAR").unwrap(), "inner");
-            });
-            assert_eq!(string_value("VAR").unwrap(), "outer");
-        }
+    #[test]
+    fn test_local() {
+        Shell::init();
+        bind("VAR", "outer", None, None).unwrap();
+        bash_func("func_name", || {
+            local(&["VAR=inner"]).unwrap();
+            assert_eq!(string_value("VAR").unwrap(), "inner");
+        });
+        assert_eq!(string_value("VAR").unwrap(), "outer");
     }
 }

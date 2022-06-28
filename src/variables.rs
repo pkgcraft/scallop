@@ -294,73 +294,69 @@ mod tests {
     use super::*;
     use crate::Shell;
 
-    use rusty_fork::rusty_fork_test;
+    #[test]
+    fn test_string_vec() {
+        Shell::init();
+        assert!(string_vec("VAR").is_err());
+        bind("VAR", "", None, None).unwrap();
+        assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
+        bind("VAR", "a", None, None).unwrap();
+        assert_eq!(string_vec("VAR").unwrap(), vec!["a"]);
+        bind("VAR", "1 2 3", None, None).unwrap();
+        assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
+        unbind("VAR").unwrap();
+        assert!(string_vec("VAR").is_err());
+    }
 
-    rusty_fork_test! {
-        #[test]
-        fn test_string_vec() {
-            let _sh = Shell::new("sh");
-            assert!(string_vec("VAR").is_err());
-            bind("VAR", "", None, None).unwrap();
-            assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
-            bind("VAR", "a", None, None).unwrap();
-            assert_eq!(string_vec("VAR").unwrap(), vec!["a"]);
-            bind("VAR", "1 2 3", None, None).unwrap();
-            assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
-            unbind("VAR").unwrap();
-            assert!(string_vec("VAR").is_err());
-        }
+    #[test]
+    fn test_readonly_var() {
+        Shell::init();
+        bind("VAR", "1", None, Some(Attr::READONLY)).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "1");
+        let err = bind("VAR", "1", None, None).unwrap_err();
+        assert_eq!(err.to_string(), "scallop: VAR: readonly variable");
+        let err = unbind("VAR").unwrap_err();
+        assert_eq!(err.to_string(), "scallop: VAR: cannot unset: readonly variable");
+    }
 
-        #[test]
-        fn test_readonly_var() {
-            let _sh = Shell::new("sh");
-            bind("VAR", "1", None, Some(Attr::READONLY)).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "1");
-            let err = bind("VAR", "1", None, None).unwrap_err();
-            assert_eq!(err.to_string(), "sh: VAR: readonly variable");
-            let err = unbind("VAR").unwrap_err();
-            assert_eq!(err.to_string(), "sh: VAR: cannot unset: readonly variable");
-        }
+    #[test]
+    fn test_variable() {
+        Shell::init();
+        let mut var = Variable::new("VAR");
+        assert_eq!(var.string_value(), None);
+        var.bind("", None, None).unwrap();
+        assert_eq!(var.string_value().unwrap(), "");
+        var.bind("1", None, None).unwrap();
+        assert_eq!(var.string_value().unwrap(), "1");
+        var.append("2").unwrap();
+        assert_eq!(var.string_value().unwrap(), "12");
+        var.append(" 3").unwrap();
+        assert_eq!(var.string_value().unwrap(), "12 3");
+        var.unbind().unwrap();
+        assert_eq!(var.string_value(), None);
+    }
 
-        #[test]
-        fn test_variable() {
-            let _sh = Shell::new("sh");
-            let mut var = Variable::new("VAR");
-            assert_eq!(var.string_value(), None);
-            var.bind("", None, None).unwrap();
-            assert_eq!(var.string_value().unwrap(), "");
-            var.bind("1", None, None).unwrap();
-            assert_eq!(var.string_value().unwrap(), "1");
-            var.append("2").unwrap();
-            assert_eq!(var.string_value().unwrap(), "12");
-            var.append(" 3").unwrap();
-            assert_eq!(var.string_value().unwrap(), "12 3");
-            var.unbind().unwrap();
-            assert_eq!(var.string_value(), None);
-        }
+    #[test]
+    fn test_expand() {
+        Shell::init();
+        let mut var1 = Variable::new("VAR1");
+        let mut var2 = Variable::new("VAR2");
+        var1.bind("1", None, None).unwrap();
+        var2.bind("${VAR1}", None, None).unwrap();
+        assert_eq!(var2.expand().unwrap(), "1");
+        assert_eq!(expand("${VAR3:-3}").unwrap(), "3");
+    }
 
-        #[test]
-        fn test_expand() {
-            let _sh = Shell::new("sh");
-            let mut var1 = Variable::new("VAR1");
-            let mut var2 = Variable::new("VAR2");
-            var1.bind("1", None, None).unwrap();
-            var2.bind("${VAR1}", None, None).unwrap();
-            assert_eq!(var2.expand().unwrap(), "1");
-            assert_eq!(expand("${VAR3:-3}").unwrap(), "3");
+    #[test]
+    fn test_scoped_variable() {
+        Shell::init();
+        bind("VAR", "outer", None, None).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "outer");
+        {
+            let mut var = ScopedVariable::new("VAR");
+            var.bind("inner", None, None).unwrap();
+            assert_eq!(var.string_value().unwrap(), "inner");
         }
-
-        #[test]
-        fn test_scoped_variable() {
-            let _sh = Shell::new("sh");
-            bind("VAR", "outer", None, None).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "outer");
-            {
-                let mut var = ScopedVariable::new("VAR");
-                var.bind("inner", None, None).unwrap();
-                assert_eq!(var.string_value().unwrap(), "inner");
-            }
-            assert_eq!(string_value("VAR").unwrap(), "outer");
-        }
+        assert_eq!(string_value("VAR").unwrap(), "outer");
     }
 }

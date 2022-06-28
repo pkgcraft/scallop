@@ -11,7 +11,7 @@ use bitflags::bitflags;
 use nix::sys::signal;
 use once_cell::sync::Lazy;
 
-use crate::shell::{is_subshell, kill};
+use crate::shell::{is_subshell, kill, Shell};
 use crate::traits::*;
 use crate::{bash, command, Error, Result};
 
@@ -446,8 +446,7 @@ impl From<ExitStatus> for ExecStatus {
 
 /// Raise an error and reset the current bash process from within a builtin.
 pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
-    let data = CString::new(err.as_ref()).unwrap();
-    unsafe { bash::shm_error(data.as_ptr()) };
+    Shell::set_shm_error(err);
 
     // TODO: send SIGTERM to background jobs (use jobs builtin)
     match is_subshell() {
@@ -489,71 +488,65 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Shell;
 
-    use rusty_fork::rusty_fork_test;
+    #[test]
+    fn toggle_status() {
+        Shell::init();
+        // select a builtin to toggle
+        let (enabled, disabled) = shell_builtins();
+        assert!(!enabled.is_empty());
+        let builtin = enabled.iter().next().unwrap();
+        assert!(!disabled.contains(builtin));
 
-    rusty_fork_test! {
-        #[test]
-        fn toggle_status() {
-            let _sh = Shell::new("sh");
+        // disable the builtin
+        disable(&[builtin]).unwrap();
+        let (enabled, disabled) = shell_builtins();
+        assert!(!enabled.contains(builtin));
+        assert!(disabled.contains(builtin));
 
-            // select a builtin to toggle
-            let (enabled, disabled) = shell_builtins();
-            assert!(!enabled.is_empty());
-            let builtin = enabled.iter().next().unwrap();
-            assert!(!disabled.contains(builtin));
+        // enable the builtin
+        enable(&[builtin]).unwrap();
+        let (enabled, disabled) = shell_builtins();
+        assert!(enabled.contains(builtin));
+        assert!(!disabled.contains(builtin));
+    }
 
-            // disable the builtin
-            disable(&[builtin]).unwrap();
-            let (enabled, disabled) = shell_builtins();
-            assert!(!enabled.contains(builtin));
-            assert!(disabled.contains(builtin));
+    #[test]
+    fn scoped_options() {
+        Shell::init();
+        let (set, unset) = ("autocd", "sourcepath");
 
-            // enable the builtin
-            enable(&[builtin]).unwrap();
-            let (enabled, disabled) = shell_builtins();
-            assert!(enabled.contains(builtin));
-            assert!(!disabled.contains(builtin));
+        assert!(!bash::shopt_opts().contains(set));
+        assert!(bash::shopt_opts().contains(unset));
+        {
+            let mut opts = ScopedOptions::default();
+            opts.enable([set]).unwrap();
+            opts.disable([unset]).unwrap();
+            assert!(bash::shopt_opts().contains(set));
+            assert!(!bash::shopt_opts().contains(unset));
         }
+        assert!(!bash::shopt_opts().contains(set));
+        assert!(bash::shopt_opts().contains(unset));
 
-        #[test]
-        fn scoped_options() {
-            let _sh = Shell::new("sh");
-            let (set, unset) = ("autocd", "sourcepath");
-
+        // toggle options in separate scope from ScopedOptions creation
+        {
+            let mut opts = ScopedOptions::default();
+            // options aren't toggled
             assert!(!bash::shopt_opts().contains(set));
             assert!(bash::shopt_opts().contains(unset));
             {
-                let mut opts = ScopedOptions::default();
                 opts.enable([set]).unwrap();
                 opts.disable([unset]).unwrap();
+                // options are toggled
                 assert!(bash::shopt_opts().contains(set));
                 assert!(!bash::shopt_opts().contains(unset));
             }
-            assert!(!bash::shopt_opts().contains(set));
-            assert!(bash::shopt_opts().contains(unset));
-
-            // toggle options in separate scope from ScopedOptions creation
-            {
-                let mut opts = ScopedOptions::default();
-                // options aren't toggled
-                assert!(!bash::shopt_opts().contains(set));
-                assert!(bash::shopt_opts().contains(unset));
-                {
-                    opts.enable([set]).unwrap();
-                    opts.disable([unset]).unwrap();
-                    // options are toggled
-                    assert!(bash::shopt_opts().contains(set));
-                    assert!(!bash::shopt_opts().contains(unset));
-                }
-                // options are still toggled
-                assert!(bash::shopt_opts().contains(set));
-                assert!(!bash::shopt_opts().contains(unset));
-            }
-            // options have been reverted
-            assert!(!bash::shopt_opts().contains(set));
-            assert!(bash::shopt_opts().contains(unset));
+            // options are still toggled
+            assert!(bash::shopt_opts().contains(set));
+            assert!(!bash::shopt_opts().contains(unset));
         }
+        // options have been reverted
+        assert!(!bash::shopt_opts().contains(set));
+        assert!(bash::shopt_opts().contains(unset));
     }
 }

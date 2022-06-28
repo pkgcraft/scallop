@@ -1,13 +1,14 @@
 use std::ffi::CString;
-use std::os::raw::c_int;
+use std::os::raw::{c_char, c_int};
 use std::path::Path;
 use std::{env, mem, process, ptr};
 
 use nix::{
+    libc::snprintf,
     sys::signal,
     unistd::{getpid, Pid},
 };
-use once_cell::sync::Lazy;
+use once_cell::sync::{Lazy, OnceCell};
 
 use crate::{bash, builtins, error, source, Error, Result};
 
@@ -17,16 +18,24 @@ pub struct Shell {
 }
 
 impl Shell {
-    /// Create and initialize the shell for general use.
-    pub fn new(name: &str) -> Self {
-        // initialize bash for library usage
-        let name = CString::new(name).unwrap();
+    /// Initialize the shell for library use.
+    pub fn init() {
+        SHELL
+            .set(Shell::_init())
+            .expect("failed initializing shell");
+    }
+
+    fn _init() -> Self {
+        let shm: *mut c_char;
+        let name = CString::new("scallop").unwrap();
         unsafe {
             bash::set_shell_name(name.as_ptr() as *mut _);
             bash::lib_error_handlers(Some(error::bash_error), Some(error::bash_warning));
-            if bash::lib_init() != 0 {
+            shm = bash::lib_init(4096) as *mut c_char;
+            if shm.is_null() {
                 panic!("failed initializing bash");
             }
+            SHM.set(shm).expect("shell already initialized");
         }
 
         // force main pid initialization
@@ -35,7 +44,29 @@ impl Shell {
         Shell { _name: name }
     }
 
-    pub fn builtins<I>(&self, builtins: I)
+    /// Create an error message in shared memory.
+    pub(crate) fn set_shm_error<S: AsRef<str>>(err: S) {
+        let msg = err.as_ref();
+        let format = CString::new("%s").unwrap();
+        unsafe {
+            let addr = SHM.get().expect("uninitialized shell");
+            snprintf(*addr, 4096, format.as_ptr(), msg.as_bytes());
+        }
+    }
+
+    /// Raise an error from shared memory if one exists.
+    pub(crate) fn raise_shm_error() {
+        unsafe {
+            // Note that this is ignored if the shell wasn't initialized, e.g. using scallop as a
+            // shared library for dynamic bash builtins.
+            if let Some(ptr) = SHM.get() {
+                error::bash_error(*ptr);
+                ptr::write_bytes(*ptr, b'\0', 4096);
+            }
+        }
+    }
+
+    pub fn builtins<I>(builtins: I)
     where
         I: IntoIterator<Item = &'static builtins::Builtin> + Copy,
     {
@@ -43,18 +74,17 @@ impl Shell {
     }
 
     /// Reset the shell back to a pristine state.
-    #[inline]
-    pub fn reset(&self) {
+    pub fn reset() {
         unsafe { bash::lib_reset() };
     }
 
     /// Return the main process value.
-    pub fn pid(&self) -> &'static Pid {
+    pub fn pid() -> &'static Pid {
         &PID
     }
 
     /// Start an interactive shell session.
-    pub fn interactive(&self) {
+    pub fn interactive() {
         let mut argv_ptrs: Vec<_> = env::args()
             .map(|s| CString::new(s).unwrap().into_raw())
             .collect();
@@ -86,15 +116,9 @@ impl Shell {
     }
 }
 
-impl Drop for Shell {
-    fn drop(&mut self) {
-        if !is_subshell() {
-            self.reset();
-        }
-    }
-}
-
 static PID: Lazy<Pid> = Lazy::new(getpid);
+static SHELL: OnceCell<Shell> = OnceCell::new();
+static mut SHM: OnceCell<*mut c_char> = OnceCell::new();
 
 /// Returns true if currently operating in a subshell, false otherwise.
 pub fn is_subshell() -> bool {
@@ -108,19 +132,15 @@ pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::Shell;
+    use super::*;
     use crate::variables::*;
 
-    use rusty_fork::rusty_fork_test;
-
-    rusty_fork_test! {
-        #[test]
-        fn test_reset() {
-            let sh = Shell::new("sh");
-            bind("VAR", "1", None, None).unwrap();
-            assert_eq!(string_value("VAR").unwrap(), "1");
-            sh.reset();
-            assert_eq!(string_value("VAR"), None);
-        }
+    #[test]
+    fn test_reset() {
+        Shell::init();
+        bind("VAR", "1", None, None).unwrap();
+        assert_eq!(string_value("VAR").unwrap(), "1");
+        Shell::reset();
+        assert_eq!(string_value("VAR"), None);
     }
 }

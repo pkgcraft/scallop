@@ -1,8 +1,7 @@
-use scallop::builtins;
-use scallop::shell::Shell;
+use scallop::{builtins, Shell};
 
 fn main() {
-    let sh = Shell::new("scallop");
-    sh.builtins([&builtins::profile::BUILTIN, &builtins::command_not_found_handle::BUILTIN]);
-    sh.interactive()
+    Shell::init();
+    Shell::builtins([&builtins::profile::BUILTIN, &builtins::command_not_found_handle::BUILTIN]);
+    Shell::interactive()
 }

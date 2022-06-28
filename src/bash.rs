@@ -57,41 +57,35 @@ mod tests {
     use crate::builtins::{set, shopt};
     use crate::Shell;
 
-    use rusty_fork::rusty_fork_test;
-
-    rusty_fork_test! {
-        #[test]
-        fn test_set_opts() {
-            let _sh = Shell::new("sh");
-            // noexec option exists
-            assert!(SET_OPTS.contains("noexec"));
-            // but isn't currently enabled
-            assert!(!set_opts().contains("noexec"));
-            // enable it
-            set::enable(&["noexec"]).unwrap();
-            // and now it's currently enabled
-            assert!(set_opts().contains("noexec"));
-            // disable it
-            set::disable(&["noexec"]).unwrap();
-            assert!(!set_opts().contains("noexec"));
-        }
+    #[test]
+    fn test_set_opts() {
+        Shell::init();
+        // noexec option exists
+        assert!(SET_OPTS.contains("noexec"));
+        // but isn't currently enabled
+        assert!(!set_opts().contains("noexec"));
+        // enable it
+        set::enable(&["noexec"]).unwrap();
+        // and now it's currently enabled
+        assert!(set_opts().contains("noexec"));
+        // disable it
+        set::disable(&["noexec"]).unwrap();
+        assert!(!set_opts().contains("noexec"));
     }
 
-    rusty_fork_test! {
-        #[test]
-        fn test_shopt_opts() {
-            let _sh = Shell::new("sh");
-            // autocd option exists
-            assert!(SHOPT_OPTS.contains("autocd"));
-            // but isn't currently enabled
-            assert!(!shopt_opts().contains("autocd"));
-            // enable it
-            shopt::enable(&["autocd"]).unwrap();
-            // and now it's currently enabled
-            assert!(shopt_opts().contains("autocd"));
-            // disable it
-            shopt::disable(&["autocd"]).unwrap();
-            assert!(!shopt_opts().contains("autocd"));
-        }
+    #[test]
+    fn test_shopt_opts() {
+        Shell::init();
+        // autocd option exists
+        assert!(SHOPT_OPTS.contains("autocd"));
+        // but isn't currently enabled
+        assert!(!shopt_opts().contains("autocd"));
+        // enable it
+        shopt::enable(&["autocd"]).unwrap();
+        // and now it's currently enabled
+        assert!(shopt_opts().contains("autocd"));
+        // disable it
+        shopt::disable(&["autocd"]).unwrap();
+        assert!(!shopt_opts().contains("autocd"));
     }
 }
