@@ -51,6 +51,7 @@ fn main() {
     // library exists before building our own.
 
     // build bash library if it doesn't exist
+    // job control support is required for $PIPESTATUS
     let mut bash = Config::new(&bash_path);
     if !Path::new(&format!("{}/libbash.a", bash_build_dir)).exists() {
         bash.forbid("--disable-shared")
