@@ -109,6 +109,11 @@ fn main() {
         println!("cargo:rustc-link-lib=static=bash");
     }
 
+    // `cargo llvm-cov` currently appears to have somewhat naive object detection and erroneously
+    // includes the config.status file causing it to error out
+    fs::remove_file(PathBuf::from(bash_build_dir).join("config.status"))
+        .expect("failed removing config.status file");
+
     // add bash symbols to scallop's dynamic symbol table
     // -- required for loading external builtins
     //println!("cargo:rustc-link-arg-bin=scallop=-rdynamic");
