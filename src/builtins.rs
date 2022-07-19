@@ -204,7 +204,10 @@ fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<&str
 
     match unknown.is_empty() {
         true => Ok(toggled),
-        false => Err(Error::Base(format!("unknown builtins: {}", unknown.join(", ")))),
+        false => {
+            unknown.sort();
+            Err(Error::Base(format!("unknown builtins: {}", unknown.join(", "))))
+        }
     }
 }
 
