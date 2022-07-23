@@ -66,10 +66,7 @@ impl Shell {
         }
     }
 
-    pub fn builtins<I>(builtins: I)
-    where
-        I: IntoIterator<Item = &'static builtins::Builtin> + Copy,
-    {
+    pub fn builtins(builtins: &[builtins::Builtin]) {
         builtins::register(builtins);
     }
 

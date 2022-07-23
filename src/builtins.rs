@@ -1,11 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::ffi::{CStr, CString};
-use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_int};
 use std::process::ExitStatus;
 use std::sync::RwLock;
-use std::{mem, process, ptr};
+use std::{fmt, mem, process, ptr};
 
 use bitflags::bitflags;
 use nix::sys::signal;
@@ -360,14 +359,11 @@ impl Drop for ScopedOptions {
 }
 
 /// Register builtins into the internal list for use.
-pub fn register<I>(builtins: I)
-where
-    I: IntoIterator<Item = &'static Builtin> + Copy,
-{
+pub fn register(builtins: &[Builtin]) {
     unsafe {
         // convert builtins into pointers
         let mut builtin_ptrs: Vec<_> = builtins
-            .into_iter()
+            .iter()
             .map(|b| Box::into_raw(Box::new((*b).into())))
             .collect();
 
@@ -385,16 +381,13 @@ where
     update_run_map(builtins);
 }
 
-static BUILTINS: Lazy<RwLock<HashMap<&'static str, &'static Builtin>>> =
+static BUILTINS: Lazy<RwLock<HashMap<&'static str, Builtin>>> =
     Lazy::new(|| RwLock::new(HashMap::new()));
 
 /// Add builtins to known mapping for run() wrapper to work as expected.
-pub fn update_run_map<I>(builtins: I)
-where
-    I: IntoIterator<Item = &'static Builtin>,
-{
+pub fn update_run_map(builtins: &[Builtin]) {
     let mut builtin_map = BUILTINS.write().unwrap();
-    builtin_map.extend(builtins.into_iter().map(|b| (b.name, b)));
+    builtin_map.extend(builtins.iter().map(|b| (b.name, *b)));
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -462,9 +455,9 @@ pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
 }
 
 /// Get the builtin matching the current running command if it exists.
-pub fn running_builtin() -> Option<&'static Builtin> {
+pub fn running_builtin() -> Option<Builtin> {
     command::current()
-        .and_then(|c| BUILTINS.try_read().ok().map(|b| b.get(c).cloned()))
+        .and_then(|c| BUILTINS.try_read().ok().map(|b| b.get(c).copied()))
         .flatten()
 }
 
