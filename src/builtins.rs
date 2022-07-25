@@ -138,7 +138,7 @@ impl From<Builtin> for bash::Builtin {
         bash::Builtin {
             name,
             function: Some(run_builtin),
-            flags: Attr::ENABLED.bits() as i32,
+            flags: Attr::STATIC.bits() as i32,
             long_doc,
             short_doc,
             handle: ptr::null_mut(),
