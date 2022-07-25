@@ -448,7 +448,7 @@ impl From<ExitStatus> for ExecStatus {
 
 /// Raise an error and reset the current bash process from within a builtin.
 pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
-    Shell::set_shm_error(err);
+    Shell::set_shm_error(err.as_ref());
 
     // TODO: send SIGTERM to background jobs (use jobs builtin)
     match is_subshell() {

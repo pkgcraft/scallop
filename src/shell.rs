@@ -4,7 +4,6 @@ use std::path::Path;
 use std::{env, mem, process, ptr};
 
 use nix::{
-    libc::snprintf,
     sys::signal,
     unistd::{getpid, Pid},
 };
@@ -45,12 +44,12 @@ impl Shell {
     }
 
     /// Create an error message in shared memory.
-    pub(crate) fn set_shm_error<S: AsRef<str>>(err: S) {
-        let msg = err.as_ref();
-        let format = CString::new("%s").unwrap();
+    pub(crate) fn set_shm_error(msg: &str) {
+        let msg = CString::new(msg).unwrap();
+        let data = msg.into_bytes_with_nul();
         unsafe {
-            let addr = SHM.get().expect("uninitialized shell");
-            snprintf(*addr, 4096, format.as_ptr(), msg.as_bytes());
+            let addr = *SHM.get().expect("uninitialized shell");
+            ptr::copy_nonoverlapping(data.as_ptr(), addr as *mut u8, 4096);
         }
     }
 
