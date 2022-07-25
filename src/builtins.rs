@@ -108,6 +108,12 @@ impl Hash for Builtin {
     }
 }
 
+impl AsRef<str> for Builtin {
+    fn as_ref(&self) -> &str {
+        self.name
+    }
+}
+
 impl Builtin {
     #[inline]
     pub fn run(&self, args: &[&str]) -> Result<ExecStatus> {
