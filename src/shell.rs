@@ -66,10 +66,6 @@ impl Shell {
         }
     }
 
-    pub fn builtins(builtins: &[builtins::Builtin]) {
-        builtins::register(builtins);
-    }
-
     /// Reset the shell back to a pristine state.
     pub fn reset() {
         unsafe { bash::lib_reset() };
