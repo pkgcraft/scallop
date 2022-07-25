@@ -479,8 +479,8 @@ extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
         Ok(ret) => i32::from(ret),
         Err(e) => {
             match e {
-                Error::Builtin(_) => eprintln!("{cmd}: error: {e}"),
-                _ => eprintln!("{e}"),
+                Error::Builtin(_) => drop(raise_error(format!("{cmd}: error: {e}"))),
+                _ => drop(raise_error(e.to_string())),
             }
             1
         }
