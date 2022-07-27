@@ -300,11 +300,11 @@ mod tests {
         Shell::init();
         assert!(string_vec("VAR").is_err());
         bind("VAR", "", None, None).unwrap();
-        assert_eq!(string_vec("VAR").unwrap(), vec![""; 0]);
+        assert!(string_vec("VAR").unwrap().is_empty());
         bind("VAR", "a", None, None).unwrap();
-        assert_eq!(string_vec("VAR").unwrap(), vec!["a"]);
+        assert_eq!(string_vec("VAR").unwrap(), ["a"]);
         bind("VAR", "1 2 3", None, None).unwrap();
-        assert_eq!(string_vec("VAR").unwrap(), vec!["1", "2", "3"]);
+        assert_eq!(string_vec("VAR").unwrap(), ["1", "2", "3"]);
         unbind("VAR").unwrap();
         assert!(string_vec("VAR").is_err());
     }
