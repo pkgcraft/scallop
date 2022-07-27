@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use crate::builtins::{Builtin, ExecStatus, ScopedOptions};
+use crate::builtins::{make_builtin, ExecStatus, ScopedOptions};
 use crate::command::Command;
 use crate::{Error, Result};
 
@@ -37,9 +37,4 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     Ok(ExecStatus::Success)
 }
 
-pub static BUILTIN: Builtin = Builtin {
-    name: "profile",
-    func: run,
-    help: LONG_DOC,
-    usage: "profile func arg1 arg2",
-};
+make_builtin!("profile", profile_builtin, run, LONG_DOC, "profile func arg1 arg2");

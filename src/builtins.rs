@@ -1,18 +1,15 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ffi::{CStr, CString};
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_int};
 use std::process::ExitStatus;
-use std::sync::RwLock;
 use std::{fmt, mem, process, ptr};
 
 use bitflags::bitflags;
 use nix::sys::signal;
-use once_cell::sync::Lazy;
 
 use crate::shell::{is_subshell, kill, Shell};
-use crate::traits::*;
-use crate::{bash, command, Error, Result};
+use crate::{bash, Error, Result};
 
 mod _bash;
 pub mod command_not_found_handle;
@@ -22,6 +19,7 @@ pub mod profile;
 pub use _bash::*;
 
 pub type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
+pub type BuiltinFnPtr = unsafe extern "C" fn(list: *mut bash::WordList) -> c_int;
 
 bitflags! {
     /// Flag values describing builtin attributes.
@@ -78,6 +76,7 @@ pub mod shopt {
 pub struct Builtin {
     pub name: &'static str,
     pub func: BuiltinFn,
+    pub cfunc: BuiltinFnPtr,
     pub help: &'static str,
     pub usage: &'static str,
 }
@@ -143,7 +142,7 @@ impl From<Builtin> for bash::Builtin {
 
         bash::Builtin {
             name,
-            function: Some(run_builtin),
+            function: Some(builtin.cfunc),
             flags: Attr::STATIC.bits() as i32,
             long_doc,
             short_doc,
@@ -151,8 +150,6 @@ impl From<Builtin> for bash::Builtin {
         }
     }
 }
-
-type BuiltinFnPtr = unsafe extern "C" fn(list: *mut bash::WordList) -> c_int;
 
 // Dynamically-loaded builtins require non-null function pointers since wrapping the function
 // pointer field member in Option<fn> causes bash to segfault.
@@ -382,18 +379,6 @@ pub fn register(builtins: &[Builtin]) {
             mem::drop(Box::from_raw(b));
         }
     }
-
-    // add builtins to known mapping
-    update_run_map(builtins);
-}
-
-static BUILTINS: Lazy<RwLock<HashMap<&'static str, Builtin>>> =
-    Lazy::new(|| RwLock::new(HashMap::new()));
-
-/// Add builtins to known mapping for run() wrapper to work as expected.
-pub fn update_run_map(builtins: &[Builtin]) {
-    let mut builtin_map = BUILTINS.write().unwrap();
-    builtin_map.extend(builtins.iter().map(|b| (b.name, *b)));
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -460,33 +445,43 @@ pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
     }
 }
 
-/// Get the builtin matching the current running command if it exists.
-pub fn running_builtin() -> Option<Builtin> {
-    command::current()
-        .and_then(|c| BUILTINS.try_read().ok().map(|b| b.get(c).copied()))
-        .flatten()
-}
+/// Create C compatible builtin function wrapper converting between rust and C types.
+#[macro_export]
+macro_rules! make_builtin {
+    ($name:expr, $func_name:ident, $func:expr, $long_doc:expr, $usage:expr) => {
+        use std::os::raw::c_int;
 
-/// Builtin function wrapper converting between rust and C types.
-#[no_mangle]
-extern "C" fn run_builtin(list: *mut bash::WordList) -> c_int {
-    let builtin = running_builtin().expect("unknown builtin");
-    let cmd = builtin.name;
-    let words = list.into_words(false);
-    let args: Vec<_> = words.into_iter().collect();
+        use $crate::builtins::{raise_error, Builtin};
+        use $crate::traits::IntoWords;
 
-    match builtin.run(&args) {
-        Ok(ret) => i32::from(ret),
-        Err(e) => {
-            match e {
-                Error::Bail(s) => drop(raise_error(format!("{cmd}: error: {s}"))),
-                Error::Builtin(s) => eprintln!("{cmd}: error: {s}"),
-                _ => eprintln!("{e}"),
+        #[no_mangle]
+        extern "C" fn $func_name(list: *mut $crate::bash::WordList) -> c_int {
+            let words = list.into_words(false);
+            let args: Vec<_> = words.into_iter().collect();
+
+            match $func(&args) {
+                Ok(ret) => i32::from(ret),
+                Err(e) => {
+                    match e {
+                        $crate::Error::Bail(s) => drop(raise_error(format!("{}: error: {s}", $name))),
+                        $crate::Error::Builtin(s) => eprintln!("{}: error: {s}", $name),
+                        _ => eprintln!("{e}"),
+                    }
+                    1
+                }
             }
-            1
         }
-    }
+
+        pub static BUILTIN: Builtin = Builtin {
+            name: $name,
+            func: $func,
+            cfunc: $func_name,
+            help: $long_doc,
+            usage: $usage,
+        };
+    };
 }
+pub use make_builtin;
 
 #[cfg(test)]
 mod tests {

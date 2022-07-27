@@ -1,4 +1,4 @@
-use crate::builtins::{Builtin, ExecStatus};
+use crate::builtins::{make_builtin, ExecStatus};
 use crate::{Error, Result};
 
 static LONG_DOC: &str = "\
@@ -15,9 +15,10 @@ pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
     Err(Error::Base(format!("unknown command {cmd:?} when executing: {full_cmd}")))
 }
 
-pub static BUILTIN: Builtin = Builtin {
-    name: "command_not_found_handle",
-    func: run,
-    help: LONG_DOC,
-    usage: "for internal use only",
-};
+make_builtin!(
+    "command_not_found_handle",
+    command_not_found_handle_builtin,
+    run,
+    LONG_DOC,
+    "for internal use only"
+);
