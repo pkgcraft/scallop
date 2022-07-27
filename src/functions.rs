@@ -50,14 +50,14 @@ pub fn bash_func<S: AsRef<str>, F: FnOnce()>(name: S, func: F) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::builtins::local;
     use crate::variables::{bind, string_value};
-    use crate::{source, Shell};
+    use crate::source;
+
+    use super::*;
 
     #[test]
     fn test_find() {
-        Shell::init();
         assert!(find("foo").is_none());
         source::string("foo() { :; }").unwrap();
         assert!(find("foo").is_some());
@@ -65,7 +65,6 @@ mod tests {
 
     #[test]
     fn execute() {
-        Shell::init();
         assert_eq!(string_value("VAR"), None);
         source::string("foo() { VAR=$1; }").unwrap();
         let mut func = find("foo").unwrap();
@@ -77,7 +76,6 @@ mod tests {
 
     #[test]
     fn test_bash_func() {
-        Shell::init();
         bind("VAR", "outer", None, None).unwrap();
         bash_func("func_name", || {
             local(&["VAR=inner"]).unwrap();

@@ -56,14 +56,13 @@ pub fn file<P: AsRef<Path>>(path: P) -> Result<ExecStatus> {
 mod tests {
     use std::io::Write;
 
-    use crate::variables::string_value;
-    use crate::{source, Shell};
-
     use tempfile::NamedTempFile;
+
+    use crate::variables::string_value;
+    use crate::source;
 
     #[test]
     fn test_source_string() {
-        Shell::init();
         assert_eq!(string_value("VAR"), None);
 
         source::string("VAR=1").unwrap();
@@ -78,7 +77,6 @@ mod tests {
 
     #[test]
     fn test_source_string_error() {
-        Shell::init();
         // bad bash code raises error
         let err = source::string("local VAR").unwrap_err();
         assert_eq!(err.to_string(), "scallop: local: can only be used in a function");
@@ -91,7 +89,6 @@ mod tests {
 
     #[test]
     fn test_source_file() {
-        Shell::init();
         assert_eq!(string_value("VAR"), None);
         let mut file = NamedTempFile::new().unwrap();
 
@@ -110,7 +107,6 @@ mod tests {
 
     #[test]
     fn test_source_file_error() {
-        Shell::init();
         assert_eq!(string_value("VAR"), None);
         let mut file = NamedTempFile::new().unwrap();
 

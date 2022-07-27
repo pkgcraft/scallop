@@ -293,11 +293,9 @@ pub fn var_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Shell;
 
     #[test]
     fn test_string_vec() {
-        Shell::init();
         assert!(string_vec("VAR").is_err());
         bind("VAR", "", None, None).unwrap();
         assert!(string_vec("VAR").unwrap().is_empty());
@@ -311,7 +309,6 @@ mod tests {
 
     #[test]
     fn test_readonly_var() {
-        Shell::init();
         bind("VAR", "1", None, Some(Attr::READONLY)).unwrap();
         assert_eq!(string_value("VAR").unwrap(), "1");
         let err = bind("VAR", "1", None, None).unwrap_err();
@@ -322,7 +319,6 @@ mod tests {
 
     #[test]
     fn test_variable() {
-        Shell::init();
         let mut var = Variable::new("VAR");
         assert_eq!(var.string_value(), None);
         var.bind("", None, None).unwrap();
@@ -339,7 +335,6 @@ mod tests {
 
     #[test]
     fn test_expand() {
-        Shell::init();
         let mut var1 = Variable::new("VAR1");
         let mut var2 = Variable::new("VAR2");
         var1.bind("1", None, None).unwrap();
@@ -350,7 +345,6 @@ mod tests {
 
     #[test]
     fn test_scoped_variable() {
-        Shell::init();
         bind("VAR", "outer", None, None).unwrap();
         assert_eq!(string_value("VAR").unwrap(), "outer");
         {

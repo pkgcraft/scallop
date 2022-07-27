@@ -52,14 +52,12 @@ pub static SHOPT_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use crate::builtins::{set, shopt};
-    use crate::Shell;
+
+    use super::*;
 
     #[test]
     fn test_set_opts() {
-        Shell::init();
         // noexec option exists
         assert!(SET_OPTS.contains("noexec"));
         // but isn't currently enabled
@@ -75,7 +73,6 @@ mod tests {
 
     #[test]
     fn test_shopt_opts() {
-        Shell::init();
         // autocd option exists
         assert!(SHOPT_OPTS.contains("autocd"));
         // but isn't currently enabled

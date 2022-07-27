@@ -129,7 +129,6 @@ mod tests {
 
     #[test]
     fn test_reset() {
-        Shell::init();
         bind("VAR", "1", None, None).unwrap();
         assert_eq!(string_value("VAR").unwrap(), "1");
         Shell::reset();

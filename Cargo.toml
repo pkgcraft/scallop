@@ -35,4 +35,5 @@ bindgen = "0.60.1"
 num_cpus = "1.0"
 
 [dev-dependencies]
+ctor = "0.1.22"
 tempfile = "3"

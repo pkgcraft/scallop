@@ -46,15 +46,13 @@ pub fn shopt(args: &[&str]) -> Result<ExecStatus> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use crate::functions::bash_func;
     use crate::variables::{bind, string_value};
-    use crate::Shell;
+
+    use super::*;
 
     #[test]
     fn test_local() {
-        Shell::init();
         bind("VAR", "outer", None, None).unwrap();
         bash_func("func_name", || {
             local(&["VAR=inner"]).unwrap();

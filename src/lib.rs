@@ -8,6 +8,7 @@ pub mod error;
 pub mod functions;
 pub mod shell;
 pub mod source;
+pub(crate) mod test;
 pub mod traits;
 pub mod variables;
 

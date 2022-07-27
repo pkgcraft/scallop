@@ -493,7 +493,6 @@ mod tests {
 
     #[test]
     fn toggle_status() {
-        Shell::init();
         // select a builtin to toggle
         let (enabled, disabled) = shell_builtins();
         assert!(!enabled.is_empty());
@@ -515,7 +514,6 @@ mod tests {
 
     #[test]
     fn scoped_options() {
-        Shell::init();
         let (set, unset) = ("autocd", "sourcepath");
 
         assert!(!bash::shopt_opts().contains(set));
