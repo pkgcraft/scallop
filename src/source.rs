@@ -58,8 +58,8 @@ mod tests {
 
     use tempfile::NamedTempFile;
 
-    use crate::variables::string_value;
     use crate::source;
+    use crate::variables::string_value;
 
     #[test]
     fn test_source_string() {

@@ -51,8 +51,8 @@ pub fn bash_func<S: AsRef<str>, F: FnOnce()>(name: S, func: F) {
 #[cfg(test)]
 mod tests {
     use crate::builtins::local;
-    use crate::variables::{bind, string_value};
     use crate::source;
+    use crate::variables::{bind, string_value};
 
     use super::*;
 
