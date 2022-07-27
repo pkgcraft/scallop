@@ -12,6 +12,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum Error {
     #[error("{0}")]
+    Bail(String),
+    #[error("{0}")]
     Base(String),
     #[error("{0}")]
     Builtin(String),
