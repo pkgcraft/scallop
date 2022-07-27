@@ -243,10 +243,11 @@ pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
     match ptr {
         None => Err(Error::Base(format!("undefined variable: {name}"))),
         Some(s) => Ok(unsafe {
-            let mut strings = vec![];
-            let words = bash::list_string(s, bash::IFS, 1).into_words(true);
-            strings.extend(words.into_iter().map(|s| s.to_string()));
-            strings
+            bash::list_string(s, bash::IFS, 1)
+                .into_words(true)
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect()
         }),
     }
 }
