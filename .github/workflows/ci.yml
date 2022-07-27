@@ -20,6 +20,10 @@ jobs:
       with:
         submodules: true
 
+    - name: Get bash submodule commit hash
+      id: bash
+      run: echo "::set-output name=commit::$(git rev-parse --short HEAD:bash)"
+
     - name: Set up rust toolchain
       uses: actions-rs/toolchain@v1
       id: rust
@@ -38,8 +42,8 @@ jobs:
           ~/.cargo/registry/cache
           ~/.cargo/git/db
           target
-        key: v7-${{ github.job }}-${{ runner.os }}-rust-${{ steps.rust.outputs.rustc_hash }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
-        restore-keys: v7-${{ github.job }}-${{ runner.os }}-rust-${{ steps.rust.outputs.rustc_hash }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
+        key: v1-${{ github.job }}-${{ runner.os }}-bash-${{ steps.bash.outputs.commit }}-rust-${{ steps.rust.outputs.rustc_hash }}
+        restore-keys: v1-${{ github.job }}-${{ runner.os }}-bash-${{ steps.bash.outputs.commit }}-rust-
 
     - name: Update deps
       run: cargo update
@@ -68,6 +72,10 @@ jobs:
       with:
         submodules: true
 
+    - name: Get bash submodule commit hash
+      id: bash
+      run: echo "::set-output name=commit::$(git rev-parse --short HEAD:bash)"
+
     - name: Set up rust toolchain
       uses: actions-rs/toolchain@v1
       id: rust
@@ -87,8 +95,8 @@ jobs:
           ~/.cargo/registry/cache
           ~/.cargo/git/db
           target
-        key: v7-${{ github.job }}-${{ runner.os }}-rust-${{ steps.rust.outputs.rustc_hash }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-${{ hashFiles('Cargo.lock') }}
-        restore-keys: v7-${{ github.job }}-${{ runner.os }}-rust-${{ steps.rust.outputs.rustc_hash }}-bash-${{ hashFiles('.git/modules/bash/refs/heads/main') }}-cargo-
+        key: v1-${{ github.job }}-${{ runner.os }}-bash-${{ steps.bash.outputs.commit }}-rust-${{ steps.rust.outputs.rustc_hash }}
+        restore-keys: v1-${{ github.job }}-${{ runner.os }}-bash-${{ steps.bash.outputs.commit }}-rust-
 
     - name: Update deps
       run: cargo update
