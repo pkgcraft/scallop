@@ -176,7 +176,7 @@ impl From<Builtin> for DynBuiltin {
         DynBuiltin {
             name: b.name,
             function: b.function.unwrap(),
-            flags: b.flags,
+            flags: Attr::ENABLED.bits() as i32,
             long_doc: b.long_doc,
             short_doc: b.short_doc,
             handle: b.handle,
