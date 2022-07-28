@@ -1,7 +1,6 @@
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 
 use autotools::Config;
 use bindgen::callbacks::ParseCallbacks;
@@ -77,33 +76,7 @@ fn main() {
             .build();
     }
 
-    if cfg!(feature = "shared") {
-        let meson_build_dir = &format!("{}/meson", target_dir);
-        if !Path::new(&format!("{}/libscallop.so", meson_build_dir)).exists() {
-            Command::new("meson")
-                .args([
-                    "setup",
-                    meson_build_dir,
-                    repo_dir,
-                    &format!("-Dbash_libdir={}", bash_build_dir),
-                ])
-                .stdout(Stdio::inherit())
-                .output()
-                .expect("meson setup failed");
-            Command::new("meson")
-                .args(["compile", "-C", meson_build_dir, "-v"])
-                .stdout(Stdio::inherit())
-                .output()
-                .expect("meson compile failed");
-        }
-
-        // use shared scallop library
-        println!("cargo:rustc-link-search=native={}", meson_build_dir);
-        println!("cargo:rustc-link-lib=dylib=scallop");
-
-        // https://github.com/rust-lang/cargo/issues/4895
-        println!("cargo:rustc-env=LD_LIBRARY_PATH={}", meson_build_dir);
-    } else {
+    if !cfg!(feature = "plugin") {
         // link statically with bash
         println!("cargo:rustc-link-search=native={}", bash_build_dir);
         println!("cargo:rustc-link-lib=static=bash");
@@ -115,10 +88,6 @@ fn main() {
     if config_status.exists() {
         fs::remove_file(config_status).expect("failed removing config.status file");
     }
-
-    // add bash symbols to scallop's dynamic symbol table
-    // -- required for loading external builtins
-    //println!("cargo:rustc-link-arg-bin=scallop=-rdynamic");
 
     // generate bash bindings
     println!("cargo:rerun-if-changed=bash-wrapper.h");

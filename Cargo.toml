@@ -12,7 +12,7 @@ rust-version = "1.60"
 autotests = false
 
 [features]
-shared = []
+plugin = []
 nls = []
 
 [lib]
