@@ -462,10 +462,10 @@ macro_rules! make_builtin {
             match $func(&args) {
                 Ok(ret) => i32::from(ret),
                 Err(e) => {
+                    let msg = format!("{}: error: {e}", $name);
                     match e {
-                        $crate::Error::Bail(s) => drop(raise_error(format!("{}: error: {s}", $name))),
-                        $crate::Error::Builtin(s) => eprintln!("{}: error: {s}", $name),
-                        _ => eprintln!("{e}"),
+                        $crate::Error::Bail(_) => drop(raise_error(msg)),
+                        _ => eprintln!("{msg}"),
                     }
                     1
                 }
