@@ -1,1 +1,0 @@
-option('bash_libdir', type : 'string', value : '', description : 'directory where static bash library exists')

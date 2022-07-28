@@ -7,8 +7,7 @@ variables, arrays, and functions.
 ## Development
 
 Developing scallop requires recent versions of cargo and rust are installed
-along with a standard C compiler. Additionally, meson and ninja are required
-for shared library support.
+along with a standard C compiler.
 
 Note that using `cargo nextest` or another test runner that runs tests in
 separate processes is required, using `cargo test` will break as long as it
