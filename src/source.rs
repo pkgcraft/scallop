@@ -79,7 +79,7 @@ mod tests {
     fn test_source_string_error() {
         // bad bash code raises error
         let err = source::string("local VAR").unwrap_err();
-        assert_eq!(err.to_string(), "scallop: local: can only be used in a function");
+        assert_eq!(err.to_string(), "local: can only be used in a function");
 
         // Sourcing still continues even when an error is returned
         // because the analog to `set -e` isn't enabled.

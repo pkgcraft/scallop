@@ -312,9 +312,9 @@ mod tests {
         bind("VAR", "1", None, Some(Attr::READONLY)).unwrap();
         assert_eq!(string_value("VAR").unwrap(), "1");
         let err = bind("VAR", "1", None, None).unwrap_err();
-        assert_eq!(err.to_string(), "scallop: VAR: readonly variable");
+        assert_eq!(err.to_string(), "VAR: readonly variable");
         let err = unbind("VAR").unwrap_err();
-        assert_eq!(err.to_string(), "scallop: VAR: cannot unset: readonly variable");
+        assert_eq!(err.to_string(), "VAR: cannot unset: readonly variable");
     }
 
     #[test]

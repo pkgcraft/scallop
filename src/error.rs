@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::ffi::CStr;
+use std::io;
 use std::os::raw::c_char;
 
 use tracing::warn;
@@ -17,6 +18,8 @@ pub enum Error {
     Base(String),
     #[error("{0}")]
     Builtin(String),
+    #[error("{1}")]
+    IO(io::ErrorKind, String),
 }
 
 thread_local! {
@@ -27,9 +30,17 @@ thread_local! {
 #[no_mangle]
 pub(crate) extern "C" fn bash_error(msg: *mut c_char) {
     let msg = unsafe { CStr::from_ptr(msg).to_string_lossy() };
+    // strip shell name prefix that bash adds
+    let msg = msg.strip_prefix("scallop: ").unwrap_or(&msg);
     if !msg.is_empty() {
         LAST_ERROR.with(|prev| {
-            *prev.borrow_mut() = Some(Error::Base(msg.into()));
+            let err = io::Error::last_os_error();
+            // convert bash IO errors into scallop IO errors
+            let e = match err.raw_os_error() {
+                Some(v) if v != 0 => Error::IO(err.kind(), msg.to_string()),
+                _ => Error::Base(msg.to_string()),
+            };
+            *prev.borrow_mut() = Some(e);
         });
     }
 }
