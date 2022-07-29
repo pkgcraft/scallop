@@ -49,7 +49,7 @@ impl Shell {
         let data = msg.into_bytes_with_nul();
         unsafe {
             let addr = *SHM.get().expect("uninitialized shell");
-            ptr::copy_nonoverlapping(data.as_ptr(), addr as *mut u8, 4096);
+            ptr::copy_nonoverlapping(data.as_ptr(), addr as *mut u8, data.len());
         }
     }
 
