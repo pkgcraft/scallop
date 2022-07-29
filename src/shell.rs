@@ -97,6 +97,7 @@ impl Shell {
 
         let ret: i32;
         unsafe {
+            bash::lib_error_handlers(Some(error::stderr_output), Some(error::stderr_output));
             ret = bash::bash_main(argc, argv, env);
         }
         process::exit(ret)

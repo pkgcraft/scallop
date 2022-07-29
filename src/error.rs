@@ -57,3 +57,10 @@ pub(crate) extern "C" fn bash_warning(msg: *mut c_char) {
         warn!(msg);
     }
 }
+
+/// Wrapper to write errors and warning to stderr for interactive mode.
+#[no_mangle]
+pub(crate) extern "C" fn stderr_output(msg: *mut c_char) {
+    let msg = unsafe { CStr::from_ptr(msg).to_string_lossy() };
+    eprintln!("{msg}");
+}
