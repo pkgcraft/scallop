@@ -12,7 +12,6 @@ use crate::shell::{is_subshell, kill, Shell};
 use crate::{bash, Error, Result};
 
 mod _bash;
-pub mod command_not_found_handle;
 pub mod profile;
 
 // export native bash builtins
