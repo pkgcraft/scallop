@@ -5,9 +5,9 @@ fn main() {
     Shell::init();
 
     // load and enable builtins
-    let builtins = vec![builtins::profile::BUILTIN];
-    builtins::register(&builtins);
-    builtins::enable(&builtins).expect("failed enabling builtins");
+    let builtins = &[builtins::profile::BUILTIN];
+    builtins::register(builtins);
+    builtins::enable(builtins).expect("failed enabling builtins");
 
     // run shell
     Shell::interactive()
