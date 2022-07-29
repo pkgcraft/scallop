@@ -118,6 +118,11 @@ pub fn in_subshell() -> bool {
     unsafe { bash::SUBSHELL_ENVIRONMENT != 0 }
 }
 
+/// Returns the count of nested subshells (also available via $BASH_SUBSHELL).
+pub fn subshell_level() -> i32 {
+    unsafe { bash::SUBSHELL_LEVEL }
+}
+
 /// Send a signal to the main bash process.
 pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
     signal::kill(*PID, signal.into()).map_err(|e| Error::Base(e.to_string()))
