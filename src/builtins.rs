@@ -462,7 +462,11 @@ macro_rules! make_builtin {
             match $func(&args) {
                 Ok(ret) => i32::from(ret),
                 Err(e) => {
-                    let msg = format!("{}: error: {e}", $name);
+                    // command_not_found_handle builtin messages are unprefixed
+                    let msg = match $name {
+                        "command_not_found_handle" => e.to_string(),
+                        cmd => format!("{cmd}: error: {e}"),
+                    };
                     match e {
                         $crate::Error::Bail(_) => drop(raise_error(msg)),
                         _ => eprintln!("{msg}"),
