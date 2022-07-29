@@ -28,6 +28,8 @@ impl ParseCallbacks for BashCallback {
             "ifs_value" => Some("IFS".into()),
             "shell_builtins" => Some("SHELL_BUILTINS".into()),
             "num_shell_builtins" => Some("NUM_SHELL_BUILTINS".into()),
+            "subshell_environment" => Some("SUBSHELL_ENVIRONMENT".into()),
+            // functions
             "get_minus_o_opts" => Some("get_set_options".into()),
             _ => None,
         }
@@ -116,6 +118,7 @@ fn main() {
         .allowlist_function("lib_reset")
         .allowlist_function("set_shell_name")
         .allowlist_var("shell_name")
+        .allowlist_var("subshell_environment")
         .allowlist_var("EXECUTION_FAILURE")
         .allowlist_var("EXECUTION_SUCCESS")
         .allowlist_var("EX_LONGJMP")
