@@ -30,6 +30,7 @@ impl ParseCallbacks for BashCallback {
             "num_shell_builtins" => Some("NUM_SHELL_BUILTINS".into()),
             "subshell_environment" => Some("SUBSHELL_ENVIRONMENT".into()),
             "subshell_level" => Some("SUBSHELL_LEVEL".into()),
+            "executing_builtin" => Some("BUILTIN_LEVEL".into()),
             // functions
             "get_minus_o_opts" => Some("get_set_options".into()),
             _ => None,
@@ -111,6 +112,7 @@ fn main() {
         // execute_cmd.h
         .allowlist_var("this_command_name")
         .allowlist_var("subshell_level")
+        .allowlist_var("executing_builtin")
         .allowlist_function("execute_command")
         .allowlist_function("execute_shell_function")
         // shell.h
