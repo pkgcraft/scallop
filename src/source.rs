@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 
 use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
-use crate::{bash, Result};
+use crate::{bash, Error, Result};
 
 bitflags! {
     /// Flag values used with source::string() for altering string evaluation.
@@ -32,24 +32,26 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<ExecStatus> {
     let s = s.as_ref();
     let c_str = CString::new(s).unwrap();
     let str_ptr = c_str.as_ptr() as *mut _;
+    let ret = unsafe { bash::evalstring(str_ptr, file_ptr, Eval::NO_FREE.bits() as i32) };
 
-    unsafe {
-        bash::evalstring(str_ptr, file_ptr, Eval::NO_FREE.bits() as i32);
-    }
-
-    ok_or_error()
+    // check for more descriptive error, then use return status
+    ok_or_error().and_then(|status| match ret {
+        0 => Ok(status),
+        _ => Err(Error::Base("failed sourcing string".to_string())),
+    })
 }
 
 pub fn file<P: AsRef<Path>>(path: P) -> Result<ExecStatus> {
     let path = path.as_ref();
     let c_str = CString::new(path.to_str().unwrap()).unwrap();
     let str_ptr = c_str.as_ptr();
+    let ret = unsafe { bash::source_file(str_ptr, 0) };
 
-    unsafe {
-        bash::source_file(str_ptr, 0);
-    }
-
-    ok_or_error()
+    // check for more descriptive error, then use return status
+    ok_or_error().and_then(|status| match ret {
+        0 => Ok(status),
+        _ => Err(Error::Base(format!("failed sourcing: {:?}", path))),
+    })
 }
 
 #[cfg(test)]
