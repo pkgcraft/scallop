@@ -114,7 +114,7 @@ static SHELL: OnceCell<Shell> = OnceCell::new();
 static mut SHM: OnceCell<*mut c_char> = OnceCell::new();
 
 /// Returns true if currently operating in a subshell, false otherwise.
-pub fn is_subshell() -> bool {
+pub fn in_subshell() -> bool {
     unsafe { bash::SUBSHELL_ENVIRONMENT != 0 }
 }
 

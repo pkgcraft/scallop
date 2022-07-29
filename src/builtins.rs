@@ -8,7 +8,7 @@ use std::{fmt, mem, process, ptr};
 use bitflags::bitflags;
 use nix::sys::signal;
 
-use crate::shell::{is_subshell, kill, Shell};
+use crate::shell::{in_subshell, kill, Shell};
 use crate::{bash, Error, Result};
 
 mod _bash;
@@ -435,7 +435,7 @@ pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
     Shell::set_shm_error(err.as_ref());
 
     // TODO: send SIGTERM to background jobs (use jobs builtin)
-    match is_subshell() {
+    match in_subshell() {
         true => {
             kill(signal::Signal::SIGUSR1)?;
             process::exit(2);
