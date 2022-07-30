@@ -444,18 +444,29 @@ impl From<ExitStatus> for ExecStatus {
     }
 }
 
-/// Raise an error and reset the current bash process from within a builtin.
-pub fn raise_error<S: AsRef<str>>(err: S) -> crate::Result<ExecStatus> {
-    Shell::set_shm_error(err.as_ref());
+/// Handle builtin errors.
+pub fn handle_error(cmd: &str, err: Error) -> ExecStatus {
+    // command_not_found_handle builtin messages are unprefixed
+    let msg = match cmd {
+        "command_not_found_handle" => err.to_string(),
+        s => format!("{s}: error: {err}"),
+    };
 
-    // TODO: send SIGTERM to background jobs (use jobs builtin)
-    match in_subshell() {
-        true => {
-            kill(signal::Signal::SIGUSR1)?;
-            process::exit(2);
+    match cfg!(feature = "plugin") {
+        true => eprintln!("{msg}"),
+        false => {
+            Shell::set_shm_error(&msg);
+            if let Error::Bail(_) = err {
+                // TODO: send SIGTERM to background jobs (use jobs builtin)
+                if in_subshell() {
+                    kill(signal::Signal::SIGUSR1).ok();
+                    process::exit(2);
+                }
+            }
         }
-        false => Ok(ExecStatus::Error),
     }
+
+    ExecStatus::from(err)
 }
 
 /// Create C compatible builtin function wrapper converting between rust and C types.
@@ -464,7 +475,7 @@ macro_rules! make_builtin {
     ($name:expr, $func_name:ident, $func:expr, $long_doc:expr, $usage:expr) => {
         use std::os::raw::c_int;
 
-        use $crate::builtins::{raise_error, Builtin};
+        use $crate::builtins::Builtin;
         use $crate::traits::IntoWords;
 
         #[no_mangle]
@@ -472,21 +483,11 @@ macro_rules! make_builtin {
             let words = list.into_words(false);
             let args: Vec<_> = words.into_iter().collect();
 
-            match $func(&args) {
-                Ok(ret) => i32::from(ret),
-                Err(e) => {
-                    // command_not_found_handle builtin messages are unprefixed
-                    let msg = match $name {
-                        "command_not_found_handle" => e.to_string(),
-                        cmd => format!("{cmd}: error: {e}"),
-                    };
-                    match e {
-                        $crate::Error::Bail(_) => drop(raise_error(msg)),
-                        _ => eprintln!("{msg}"),
-                    }
-                    1
-                }
-            }
+            let ret = match $func(&args) {
+                Ok(ret) => ret,
+                Err(e) => $crate::builtins::handle_error($name, e),
+            };
+            i32::from(ret)
         }
 
         pub static BUILTIN: Builtin = Builtin {
