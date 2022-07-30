@@ -3,6 +3,7 @@ use std::ffi::CStr;
 
 use once_cell::sync::Lazy;
 
+use crate::bash;
 use crate::variables::string_value;
 
 mod internal;
@@ -23,29 +24,31 @@ pub fn shopt_opts() -> HashSet<String> {
 }
 
 /// Return the set of all shell options used with the `set` builtin.
-pub static SET_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
-    let opt_ptrs = unsafe { get_set_options() };
+pub static SET_OPTS: Lazy<HashSet<String>> = Lazy::new(|| {
     let mut opts = HashSet::new();
     let mut i = 0;
     unsafe {
+        let opt_ptrs = get_set_options();
         while let Some(p) = (*opt_ptrs.offset(i)).as_ref() {
-            opts.insert(CStr::from_ptr(p).to_str().unwrap());
+            opts.insert(CStr::from_ptr(p).to_string_lossy().into());
             i += 1;
         }
+        bash::strvec_dispose(opt_ptrs);
     }
     opts
 });
 
 /// Return the set of all shell options used with the `shopt` builtin.
-pub static SHOPT_OPTS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
-    let opt_ptrs = unsafe { get_shopt_options() };
+pub static SHOPT_OPTS: Lazy<HashSet<String>> = Lazy::new(|| {
     let mut opts = HashSet::new();
     let mut i = 0;
     unsafe {
+        let opt_ptrs = get_shopt_options();
         while let Some(p) = (*opt_ptrs.offset(i)).as_ref() {
-            opts.insert(CStr::from_ptr(p).to_str().unwrap());
+            opts.insert(CStr::from_ptr(p).to_string_lossy().into());
             i += 1;
         }
+        bash::strvec_dispose(opt_ptrs);
     }
     opts
 });
