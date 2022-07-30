@@ -402,6 +402,15 @@ impl From<ExecStatus> for i32 {
     }
 }
 
+impl From<Error> for ExecStatus {
+    fn from(e: Error) -> ExecStatus {
+        match e {
+            Error::Status(s, _) => s,
+            _ => ExecStatus::Failure(1),
+        }
+    }
+}
+
 impl From<i32> for ExecStatus {
     fn from(ret: i32) -> ExecStatus {
         match ret {
