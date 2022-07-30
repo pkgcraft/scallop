@@ -33,7 +33,11 @@ pub static SET_OPTS: Lazy<HashSet<String>> = Lazy::new(|| {
             opts.insert(CStr::from_ptr(p).to_string_lossy().into());
             i += 1;
         }
-        bash::strvec_dispose(opt_ptrs);
+        if !cfg!(feature = "plugin") {
+            // Upstream doesn't copy `set` option strings so leak it for now instead of crashing.
+            // https://savannah.gnu.org/patch/index.php?10269
+            bash::strvec_dispose(opt_ptrs);
+        }
     }
     opts
 });
