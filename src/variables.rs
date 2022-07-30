@@ -6,7 +6,7 @@ use bitflags::bitflags;
 use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
 use crate::traits::*;
-use crate::{bash, Error, Result};
+use crate::{bash, Error};
 
 bitflags! {
     /// Flags for various attributes a given variable can have.
@@ -48,7 +48,7 @@ bitflags! {
     }
 }
 
-pub fn unbind<S: AsRef<str>>(name: S) -> Result<ExecStatus> {
+pub fn unbind<S: AsRef<str>>(name: S) -> crate::Result<ExecStatus> {
     let name = name.as_ref();
     let cstr = CString::new(name).unwrap();
     unsafe {
@@ -62,7 +62,7 @@ pub fn bind<S1, S2>(
     value: S2,
     flags: Option<Assign>,
     attrs: Option<Attr>,
-) -> Result<ExecStatus>
+) -> crate::Result<ExecStatus>
 where
     S1: AsRef<str>,
     S2: AsRef<str>,
@@ -85,7 +85,7 @@ pub fn bind_global<S: AsRef<str>>(
     value: S,
     flags: Option<Assign>,
     attrs: Option<Attr>,
-) -> Result<ExecStatus> {
+) -> crate::Result<ExecStatus> {
     let name = CString::new(name.as_ref()).unwrap();
     let value = CString::new(value.as_ref()).unwrap();
     let val = value.as_ptr() as *mut _;
@@ -129,7 +129,7 @@ pub trait Variables {
         value: S,
         flags: Option<Assign>,
         attrs: Option<Attr>,
-    ) -> Result<ExecStatus> {
+    ) -> crate::Result<ExecStatus> {
         bind(self.name(), value.as_ref(), flags, attrs)
     }
 
@@ -139,17 +139,17 @@ pub trait Variables {
         value: S,
         flags: Option<Assign>,
         attrs: Option<Attr>,
-    ) -> Result<ExecStatus> {
+    ) -> crate::Result<ExecStatus> {
         bind_global(self.name(), value.as_ref(), flags, attrs)
     }
 
     #[inline]
-    fn unbind(&mut self) -> Result<ExecStatus> {
+    fn unbind(&mut self) -> crate::Result<ExecStatus> {
         unbind(self.name())
     }
 
     #[inline]
-    fn append(&mut self, s: &str) -> Result<ExecStatus> {
+    fn append(&mut self, s: &str) -> crate::Result<ExecStatus> {
         self.bind(s, Some(Assign::APPEND), None)
     }
 
@@ -209,7 +209,7 @@ impl Drop for ScopedVariable {
     #[inline]
     fn drop(&mut self) {
         if string_value(&self.var.name) != self.orig {
-            let mut reset = || -> Result<ExecStatus> {
+            let mut reset = || -> crate::Result<ExecStatus> {
                 if let Some(val) = &self.orig {
                     self.var.bind(val, None, None)
                 } else {
@@ -236,7 +236,7 @@ pub fn expand<S: AsRef<str>>(val: S) -> Option<String> {
 }
 
 /// Get the string value of a given variable name splitting it into Vec<String> based on IFS.
-pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
+pub fn string_vec<S: AsRef<str>>(name: S) -> crate::Result<Vec<String>> {
     let name = name.as_ref();
     let var_name = CString::new(name).unwrap();
     let ptr = unsafe { bash::get_string_value(var_name.as_ptr()).as_mut() };
@@ -253,7 +253,7 @@ pub fn string_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
 }
 
 /// Get the value of an array for a given variable name.
-pub fn array_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
+pub fn array_to_vec<S: AsRef<str>>(name: S) -> crate::Result<Vec<String>> {
     let name = name.as_ref();
     let var_name = CString::new(name).unwrap();
     let var = unsafe { bash::find_variable(var_name.as_ptr()).as_ref() };
@@ -281,7 +281,7 @@ pub fn array_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
 }
 
 /// Get the value of a given variable as Vec<String>.
-pub fn var_to_vec<S: AsRef<str>>(name: S) -> Result<Vec<String>> {
+pub fn var_to_vec<S: AsRef<str>>(name: S) -> crate::Result<Vec<String>> {
     let name = name.as_ref();
     let var = Variable::new(name);
     match var.is_array() {

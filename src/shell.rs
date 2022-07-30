@@ -9,7 +9,7 @@ use nix::{
 };
 use once_cell::sync::{Lazy, OnceCell};
 
-use crate::{bash, builtins, error, source, Error, Result};
+use crate::{bash, builtins, error, source, Error};
 
 #[derive(Debug)]
 pub struct Shell {
@@ -104,7 +104,7 @@ impl Shell {
     }
 
     #[inline]
-    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> Result<builtins::ExecStatus> {
+    pub fn source_file<P: AsRef<Path>>(&mut self, path: &P) -> crate::Result<builtins::ExecStatus> {
         source::file(path)
     }
 }
@@ -130,7 +130,7 @@ pub static BASH_VERSION: Lazy<String> = Lazy::new(|| unsafe {
 });
 
 /// Send a signal to the main bash process.
-pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
+pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> crate::Result<()> {
     signal::kill(*PID, signal.into()).map_err(|e| Error::Base(e.to_string()))
 }
 

@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 
 use crate::builtins::ExecStatus;
 use crate::error::ok_or_error;
-use crate::{bash, Error, Result};
+use crate::{bash, Error};
 
 bitflags! {
     /// Flag values used with source::string() for altering string evaluation.
@@ -27,7 +27,7 @@ bitflags! {
 
 static FILE_STR: Lazy<CString> = Lazy::new(|| CString::new("scallop::source::string").unwrap());
 
-pub fn string<S: AsRef<str>>(s: S) -> Result<ExecStatus> {
+pub fn string<S: AsRef<str>>(s: S) -> crate::Result<ExecStatus> {
     let file_ptr = FILE_STR.as_ptr();
     let s = s.as_ref();
     let c_str = CString::new(s).unwrap();
@@ -41,7 +41,7 @@ pub fn string<S: AsRef<str>>(s: S) -> Result<ExecStatus> {
     })
 }
 
-pub fn file<P: AsRef<Path>>(path: P) -> Result<ExecStatus> {
+pub fn file<P: AsRef<Path>>(path: P) -> crate::Result<ExecStatus> {
     let path = path.as_ref();
     let c_str = CString::new(path.to_str().unwrap()).unwrap();
     let str_ptr = c_str.as_ptr();

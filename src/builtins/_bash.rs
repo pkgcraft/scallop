@@ -1,11 +1,11 @@
+use crate::bash;
 use crate::builtins::ExecStatus;
 use crate::command::cmd_scope;
 use crate::error::ok_or_error;
 use crate::traits::*;
-use crate::{bash, Result};
 
 /// Run the `declare` builtin with the given arguments.
-pub fn declare(args: &[&str]) -> Result<ExecStatus> {
+pub fn declare(args: &[&str]) -> crate::Result<ExecStatus> {
     let args = Words::from_iter(args.iter().copied());
     cmd_scope("declare", || unsafe {
         bash::declare_builtin((&args).into());
@@ -15,7 +15,7 @@ pub fn declare(args: &[&str]) -> Result<ExecStatus> {
 }
 
 /// Run the `local` builtin with the given arguments.
-pub fn local(args: &[&str]) -> Result<ExecStatus> {
+pub fn local(args: &[&str]) -> crate::Result<ExecStatus> {
     let args = Words::from_iter(args.iter().copied());
     cmd_scope("local", || unsafe {
         bash::local_builtin((&args).into());
@@ -25,7 +25,7 @@ pub fn local(args: &[&str]) -> Result<ExecStatus> {
 }
 
 /// Run the `set` builtin with the given arguments.
-pub fn set(args: &[&str]) -> Result<ExecStatus> {
+pub fn set(args: &[&str]) -> crate::Result<ExecStatus> {
     let args = Words::from_iter(args.iter().copied());
     cmd_scope("set", || unsafe {
         bash::set_builtin((&args).into());
@@ -35,7 +35,7 @@ pub fn set(args: &[&str]) -> Result<ExecStatus> {
 }
 
 /// Run the `shopt` builtin with the given arguments.
-pub fn shopt(args: &[&str]) -> Result<ExecStatus> {
+pub fn shopt(args: &[&str]) -> crate::Result<ExecStatus> {
     let args = Words::from_iter(args.iter().copied());
     cmd_scope("shopt", || unsafe {
         bash::shopt_builtin((&args).into());

@@ -2,12 +2,12 @@ use std::time::{Duration, Instant};
 
 use crate::builtins::{make_builtin, ExecStatus, ScopedOptions};
 use crate::command::Command;
-use crate::{Error, Result};
+use crate::Error;
 
 static LONG_DOC: &str = "Profile a given function or command.";
 
 #[doc = stringify!(LONG_DOC)]
-pub(crate) fn run(args: &[&str]) -> Result<ExecStatus> {
+pub(crate) fn run(args: &[&str]) -> crate::Result<ExecStatus> {
     if args.is_empty() {
         return Err(Error::Builtin("requires 1 or more args, got 0".into()));
     }

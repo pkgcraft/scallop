@@ -9,7 +9,7 @@ use bitflags::bitflags;
 use nix::sys::signal;
 
 use crate::shell::{in_subshell, kill, Shell};
-use crate::{bash, Error, Result};
+use crate::{bash, Error};
 
 mod _bash;
 pub mod profile;
@@ -17,7 +17,7 @@ pub mod profile;
 // export native bash builtins
 pub use _bash::*;
 
-pub type BuiltinFn = fn(&[&str]) -> Result<ExecStatus>;
+pub type BuiltinFn = fn(&[&str]) -> crate::Result<ExecStatus>;
 pub type BuiltinFnPtr = unsafe extern "C" fn(list: *mut bash::WordList) -> c_int;
 
 bitflags! {
@@ -34,7 +34,7 @@ bitflags! {
 pub mod set {
     use super::*;
 
-    pub fn enable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+    pub fn enable<S: AsRef<str>>(opts: &[S]) -> crate::Result<ExecStatus> {
         let args: Vec<_> = ["-o"]
             .into_iter()
             .chain(opts.iter().map(|s| s.as_ref()))
@@ -42,7 +42,7 @@ pub mod set {
         set(&args)
     }
 
-    pub fn disable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+    pub fn disable<S: AsRef<str>>(opts: &[S]) -> crate::Result<ExecStatus> {
         let args: Vec<_> = ["+o"]
             .into_iter()
             .chain(opts.iter().map(|s| s.as_ref()))
@@ -54,7 +54,7 @@ pub mod set {
 pub mod shopt {
     use super::*;
 
-    pub fn enable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+    pub fn enable<S: AsRef<str>>(opts: &[S]) -> crate::Result<ExecStatus> {
         let args: Vec<_> = ["-s"]
             .into_iter()
             .chain(opts.iter().map(|s| s.as_ref()))
@@ -62,7 +62,7 @@ pub mod shopt {
         shopt(&args)
     }
 
-    pub fn disable<S: AsRef<str>>(opts: &[S]) -> Result<ExecStatus> {
+    pub fn disable<S: AsRef<str>>(opts: &[S]) -> crate::Result<ExecStatus> {
         let args: Vec<_> = ["-u"]
             .into_iter()
             .chain(opts.iter().map(|s| s.as_ref()))
@@ -114,7 +114,7 @@ impl AsRef<str> for Builtin {
 
 impl Builtin {
     #[inline]
-    pub fn run(&self, args: &[&str]) -> Result<ExecStatus> {
+    pub fn run(&self, args: &[&str]) -> crate::Result<ExecStatus> {
         (self.func)(args)
     }
 }
@@ -181,7 +181,7 @@ impl From<Builtin> for DynBuiltin {
 }
 
 // Enable or disable a given list of builtins.
-fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<&str>> {
+fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> crate::Result<Vec<&str>> {
     let mut unknown = Vec::<&str>::new();
     let mut toggled = Vec::<&str>::new();
     for name in builtins {
@@ -214,13 +214,13 @@ fn toggle_status<S: AsRef<str>>(builtins: &[S], enable: bool) -> Result<Vec<&str
 
 /// Disable a given list of builtins by name.
 #[inline]
-pub fn disable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<&str>> {
+pub fn disable<S: AsRef<str>>(builtins: &[S]) -> crate::Result<Vec<&str>> {
     toggle_status(builtins, false)
 }
 
 /// Enable a given list of builtins by name.
 #[inline]
-pub fn enable<S: AsRef<str>>(builtins: &[S]) -> Result<Vec<&str>> {
+pub fn enable<S: AsRef<str>>(builtins: &[S]) -> crate::Result<Vec<&str>> {
     toggle_status(builtins, true)
 }
 
@@ -254,7 +254,7 @@ pub struct ScopedBuiltins {
 
 /// Enable/disable builtins, automatically reverting their status when leaving scope.
 impl ScopedBuiltins {
-    pub fn new<S: AsRef<str>>(builtins: (&[S], &[S])) -> Result<Self> {
+    pub fn new<S: AsRef<str>>(builtins: (&[S], &[S])) -> crate::Result<Self> {
         let (add, sub) = builtins;
         Ok(ScopedBuiltins {
             enabled: enable(add)?.into_iter().map(|s| s.into()).collect(),
@@ -285,7 +285,7 @@ pub struct ScopedOptions {
 
 impl ScopedOptions {
     /// Enable shell options.
-    pub fn enable<'a, I>(&mut self, options: I) -> Result<()>
+    pub fn enable<'a, I>(&mut self, options: I) -> crate::Result<()>
     where
         I: IntoIterator<Item = &'a str>,
     {
@@ -314,7 +314,7 @@ impl ScopedOptions {
     }
 
     /// Disable shell options.
-    pub fn disable<'a, I>(&mut self, options: I) -> Result<()>
+    pub fn disable<'a, I>(&mut self, options: I) -> crate::Result<()>
     where
         I: IntoIterator<Item = &'a str>,
     {
@@ -436,7 +436,7 @@ impl From<ExitStatus> for ExecStatus {
 }
 
 /// Raise an error and reset the current bash process from within a builtin.
-pub fn raise_error<S: AsRef<str>>(err: S) -> Result<ExecStatus> {
+pub fn raise_error<S: AsRef<str>>(err: S) -> crate::Result<ExecStatus> {
     Shell::set_shm_error(err.as_ref());
 
     // TODO: send SIGTERM to background jobs (use jobs builtin)
