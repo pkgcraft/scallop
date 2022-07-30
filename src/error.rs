@@ -20,6 +20,8 @@ pub enum Error {
     Builtin(String),
     #[error("{1}")]
     IO(io::ErrorKind, String),
+    #[error("{1}")]
+    Status(ExecStatus, String),
 }
 
 thread_local! {
