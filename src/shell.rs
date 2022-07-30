@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int};
 use std::path::Path;
 use std::{env, mem, process, ptr};
@@ -123,6 +123,12 @@ pub fn subshell_level() -> i32 {
     unsafe { bash::SUBSHELL_LEVEL }
 }
 
+/// Version string related to the bundled bash release.
+pub static BASH_VERSION: Lazy<String> = Lazy::new(|| unsafe {
+    let version = CStr::from_ptr(bash::DIST_VERSION).to_str().unwrap();
+    format!("{version}.{}", bash::PATCH_LEVEL)
+});
+
 /// Send a signal to the main bash process.
 pub fn kill<T: Into<Option<signal::Signal>>>(signal: T) -> Result<()> {
     signal::kill(*PID, signal.into()).map_err(|e| Error::Base(e.to_string()))
@@ -139,5 +145,11 @@ mod tests {
         assert_eq!(string_value("VAR").unwrap(), "1");
         Shell::reset();
         assert_eq!(string_value("VAR"), None);
+    }
+
+    #[test]
+    fn test_bash_version() {
+        // TODO: add simple comparison check with version-compare if upstream merges set opts patch
+        assert!(!BASH_VERSION.is_empty());
     }
 }

@@ -31,6 +31,9 @@ impl ParseCallbacks for BashCallback {
             "subshell_environment" => Some("SUBSHELL_ENVIRONMENT".into()),
             "subshell_level" => Some("SUBSHELL_LEVEL".into()),
             "executing_builtin" => Some("BUILTIN_LEVEL".into()),
+            // global constants
+            "dist_version" => Some("DIST_VERSION".into()),
+            "patch_level" => Some("PATCH_LEVEL".into()),
             // functions
             "get_minus_o_opts" => Some("get_set_options".into()),
             _ => None,
@@ -123,6 +126,8 @@ fn main() {
         .allowlist_function("set_shell_name")
         .allowlist_var("shell_name")
         .allowlist_var("subshell_environment")
+        .allowlist_var("dist_version")
+        .allowlist_var("patch_level")
         .allowlist_var("EXECUTION_FAILURE")
         .allowlist_var("EXECUTION_SUCCESS")
         .allowlist_var("EX_LONGJMP")
