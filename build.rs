@@ -28,7 +28,6 @@ impl ParseCallbacks for BashCallback {
             "ifs_value" => Some("IFS".into()),
             "shell_builtins" => Some("SHELL_BUILTINS".into()),
             "num_shell_builtins" => Some("NUM_SHELL_BUILTINS".into()),
-            "subshell_environment" => Some("SUBSHELL_ENVIRONMENT".into()),
             "subshell_level" => Some("SUBSHELL_LEVEL".into()),
             "executing_builtin" => Some("BUILTIN_LEVEL".into()),
             // global constants
@@ -125,7 +124,6 @@ fn main() {
         .allowlist_function("lib_reset")
         .allowlist_function("set_shell_name")
         .allowlist_var("shell_name")
-        .allowlist_var("subshell_environment")
         .allowlist_var("dist_version")
         .allowlist_var("patch_level")
         .allowlist_var("EXECUTION_FAILURE")
