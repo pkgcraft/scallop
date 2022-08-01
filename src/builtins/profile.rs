@@ -9,7 +9,7 @@ static LONG_DOC: &str = "Profile a given function or command.";
 #[doc = stringify!(LONG_DOC)]
 pub(crate) fn run(args: &[&str]) -> crate::Result<ExecStatus> {
     if args.is_empty() {
-        return Err(Error::Builtin("requires 1 or more args, got 0".into()));
+        return Err(Error::Base("requires 1 or more args, got 0".into()));
     }
 
     // Disable shell history if history support is enabled, so the command being profiled isn't

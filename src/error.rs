@@ -16,8 +16,6 @@ pub enum Error {
     Bail(String),
     #[error("{0}")]
     Base(String),
-    #[error("{0}")]
-    Builtin(String),
     #[error("{1}")]
     IO(io::ErrorKind, String),
     #[error("{1}")]
